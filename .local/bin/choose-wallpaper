@@ -1,0 +1,42 @@
+#!/bin/bash
+
+THEME_FILE="$HOME/.config/themes/current"
+WALL_ROOT="$HOME/Pictures/Wallpapers"
+
+if [[ ! -f "$THEME_FILE" ]]; then
+    notify-send "Wallpaper menu" "Choose a theme first with Super+T."
+    exit 1
+fi
+
+THEME=$(cat "$THEME_FILE")
+WALL_DIR="$WALL_ROOT/$THEME"
+
+if [[ ! -d "$WALL_DIR" ]]; then
+    notify-send "Wallpaper menu" "Folder not found: $WALL_DIR"
+    exit 1
+fi
+
+FILES=()
+while IFS= read -r -d '' file; do
+    FILES+=("$file")
+done < <(find "$WALL_DIR" -maxdepth 1 -type f \
+    \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+    -print0 | sort -z)
+
+if [[ ${#FILES[@]} -eq 0 ]]; then
+    notify-send "Wallpaper menu" "No wallpapers found in $WALL_DIR"
+    exit 1
+fi
+
+CHOICE=$(for file in "${FILES[@]}"; do
+    printf '%s\0icon\x1f%s\n' "$(basename "$file")" "$file"
+done | rofi -dmenu -i -p "$THEME" -theme "$HOME/.config/rofi/wallpaper.rasi" -me-select-entry "" -me-accept-entry MousePrimary)
+
+[[ -z "$CHOICE" ]] && exit 0
+
+SELECTED="$WALL_DIR/$CHOICE"
+if [[ -f "$SELECTED" ]]; then
+    feh --bg-fill "$SELECTED"
+    printf '%s\n' "$SELECTED" > "$HOME/.config/themes/current-wallpaper"
+    "$HOME/.local/bin/apply-wallpaper-colors" "$SELECTED"
+fi

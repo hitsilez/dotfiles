@@ -1,0 +1,8 @@
+* {
+  bg: #18130Cf2;
+  bg-alt: #302617;
+  fg: #F0ECE6;
+  accent: #FDCA4F;
+  muted: #8F8A83;
+  on-accent: #18130C;
+}

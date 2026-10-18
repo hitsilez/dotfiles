@@ -1,0 +1,9 @@
+#!/bin/bash
+
+choice=$(printf '✝  Christian\n⌘  Sci-fi\n▲  Motivational' | rofi -dmenu -i -p 'Choose Theme')
+
+case "$choice" in
+  *Christian*) ~/.config/themes/switch-theme.sh Christian ;;
+  *Sci-fi*) ~/.config/themes/switch-theme.sh Sci-fi ;;
+  *Motivational*) ~/.config/themes/switch-theme.sh Motivational ;;
+esac

@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+import sys, colorsys
+from PIL import Image
+
+def hexc(c):
+    return "#%02X%02X%02X" % tuple(max(0, min(255, int(round(x)))) for x in c)
+
+def to_hls(c):
+    return colorsys.rgb_to_hls(*[x / 255 for x in c])
+
+def from_hls(h, l, s):
+    return tuple(x * 255 for x in colorsys.hls_to_rgb(h, l, s))
+
+def mix(a, b, t):
+    return tuple(a[i] * (1 - t) + b[i] * t for i in range(3))
+
+img = Image.open(sys.argv[1]).convert("RGB")
+img.thumbnail((120, 120))
+q = img.quantize(colors=8, method=Image.Quantize.MEDIANCUT)
+pal = q.getpalette()
+cols = [tuple(pal[i * 3:i * 3 + 3]) for _, i in sorted(q.getcolors(), reverse=True)]
+
+base_h = to_hls(cols[0])[0]
+best, best_score = cols[0], -1
+for c in cols:
+    h, l, s = to_hls(c)
+    score = s if 0.3 <= l <= 0.85 else s * 0.3
+    if score > best_score:
+        best, best_score = c, score
+ah, al, as_ = to_hls(best)
+accent = from_hls(ah, min(max(al, 0.5), 0.65), max(as_, 0.55))
+
+bg = from_hls(base_h, 0.07, 0.35)
+bg_alt = from_hls(base_h, 0.14, 0.35)
+fg = from_hls(base_h, 0.92, 0.25)
+muted = mix(fg, bg, 0.45)
+
+print("BG=" + hexc(bg))
+print("BGALT=" + hexc(bg_alt))
+print("FG=" + hexc(fg))
+print("MUTED=" + hexc(muted))
+print("ACCENT=" + hexc(accent))

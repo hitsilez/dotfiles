@@ -1,0 +1,37 @@
+#!/bin/bash
+[ -f "$HOME/.config/themes/wallpaper-colors-on" ] || exit 0
+WALL="$1"
+[ -f "$WALL" ] || exit 1
+eval "$("$HOME/.local/bin/wallpaper-colors" "$WALL")" || exit 1
+POLY="$HOME/.config/polybar/config.ini"
+sed -i \
+  -e "s/^background = .*/background = $BG/" \
+  -e "s/^background-alt = .*/background-alt = $BGALT/" \
+  -e "s/^foreground = .*/foreground = $FG/" \
+  -e "s/^muted = .*/muted = $MUTED/" \
+  -e "s/^accent = .*/accent = $ACCENT/" \
+  "$POLY"
+cat > "$HOME/.config/rofi/colors.rasi" << EOT
+* {
+  bg: ${BG}f2;
+  bg-alt: $BGALT;
+  fg: $FG;
+  accent: $ACCENT;
+  muted: $MUTED;
+  on-accent: $BG;
+}
+EOT
+cat > "$HOME/.config/alacritty/wallpaper-colors.toml" << EOT
+[colors.primary]
+background = "$BG"
+foreground = "$FG"
+
+[colors.cursor]
+text = "$BG"
+cursor = "$ACCENT"
+
+[colors.selection]
+text = "$BG"
+background = "$ACCENT"
+EOT
+~/.config/polybar/launch.sh

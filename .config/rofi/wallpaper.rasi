@@ -1,0 +1,33 @@
+@import "/home/tsiles/.config/rofi/colors.rasi"
+configuration {
+  show-icons: true;
+  font: "JetBrainsMono Nerd Font 11";
+}
+* {
+  background-color: transparent;
+  text-color: @fg;
+}
+window {
+  width: 900px;
+  background-color: @bg;
+  border: 2px;
+  border-color: @accent;
+  padding: 16px;
+}
+mainbox { spacing: 12px; children: [inputbar, content]; }
+inputbar {
+  background-color: @bg-alt;
+  padding: 10px 14px;
+  spacing: 8px;
+  children: [prompt, entry];
+}
+prompt { text-color: @accent; }
+entry { placeholder: "Search wallpapers..."; placeholder-color: @muted; }
+content { orientation: horizontal; spacing: 16px; children: [listview, preview]; }
+listview { lines: 8; columns: 1; spacing: 4px; fixed-height: true; scrollbar: false; }
+element { padding: 8px 12px; }
+element selected { background-color: @accent; text-color: @on-accent; }
+element-icon { size: 1px; }
+element-text { vertical-align: 0.5; text-color: inherit; }
+preview { expand: false; width: 480px; children: [icon-current-entry]; }
+icon-current-entry { expand: true; size: 480px; }
