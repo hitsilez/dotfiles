@@ -4,7 +4,7 @@ set -e
 DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo "Installing packages..."
-sudo pacman -S --needed --noconfirm i3-wm polybar rofi picom feh alacritty thunar gvfs thunar-archive-plugin file-roller python-pillow brightnessctl networkmanager pavucontrol i3lock ttf-jetbrains-mono-nerd git
+sudo pacman -S --needed --noconfirm i3-wm polybar rofi picom feh alacritty thunar gvfs thunar-archive-plugin file-roller python-pillow brightnessctl networkmanager pavucontrol i3lock ttf-jetbrains-mono-nerd git chromium
 
 echo "Enabling NetworkManager..."
 sudo systemctl enable --now NetworkManager
