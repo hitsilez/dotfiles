@@ -2,7 +2,10 @@
 set -e
 
 echo "Installing packages..."
-sudo pacman -S --needed --noconfirm i3-wm polybar rofi picom feh alacritty thunar gvfs thunar-archive-plugin file-roller python-pillow brightnessctl networkmanager
+sudo pacman -S --needed --noconfirm i3-wm polybar rofi picom feh alacritty thunar gvfs thunar-archive-plugin file-roller python-pillow brightnessctl networkmanager pavucontrol i3lock ttf-jetbrains-mono-nerd git
+
+echo "Enabling NetworkManager..."
+sudo systemctl enable --now NetworkManager
 
 echo "Copying config files..."
 mkdir -p ~/.config/i3 ~/.config/polybar/scripts ~/.config/rofi ~/.config/alacritty ~/.config/picom ~/.config/themes ~/.local/bin
@@ -27,4 +30,17 @@ cp ~/dotfiles/.local/bin/apply-wallpaper-colors ~/.local/bin/apply-wallpaper-col
 echo "Making scripts executable..."
 chmod +x ~/.config/polybar/launch.sh ~/.config/polybar/scripts/*.sh ~/.config/themes/switch-theme.sh ~/.local/bin/choose-theme ~/.local/bin/choose-wallpaper ~/.local/bin/wallpaper-colors ~/.local/bin/apply-wallpaper-colors
 
-echo "Done! Log out and start i3 to see your setup."
+echo "Setting up theme state files..."
+mkdir -p ~/Pictures/Wallpapers/Christian ~/Pictures/Wallpapers/Sci-fi ~/Pictures/Wallpapers/Motivational
+echo "Sci-fi" > ~/.config/themes/current
+
+echo ""
+echo "===================================================="
+echo "Install finished. A few things you must do yourself:"
+echo "1. Connect to Wi-Fi:  nmtui"
+echo "2. Add wallpaper images into:"
+echo "   ~/Pictures/Wallpapers/Christian"
+echo "   ~/Pictures/Wallpapers/Sci-fi"
+echo "   ~/Pictures/Wallpapers/Motivational"
+echo "3. Log out, then choose i3 at the login screen, then log in."
+echo "===================================================="
