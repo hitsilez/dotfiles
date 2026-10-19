@@ -1,0 +1,3 @@
+#!/bin/bash
+mkdir -p ~/Pictures/Screenshots
+maim -s -u | satty -f - --copy-command "xclip -selection clipboard -t image/png" -o ~/Pictures/Screenshots/%Y%m%d_%H%M%S.png

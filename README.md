@@ -22,6 +22,9 @@ The script installs the packages, copies the configs (backing up anything it rep
 - Super + T: theme switcher
 - Super + Ctrl + Space: wallpaper picker (bar, launcher and terminal colors follow the image)
 - Super + Shift + F: file manager
+- Super + B: browser
+- Super + Shift + E: power menu
+- Print Screen: screenshot with editor
 
 To turn off wallpaper-based colors, delete `~/.config/themes/wallpaper-colors-on`.
 

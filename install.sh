@@ -4,7 +4,7 @@ set -e
 DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo "Installing packages..."
-sudo pacman -S --needed --noconfirm i3-wm polybar rofi picom feh alacritty thunar gvfs thunar-archive-plugin file-roller python-pillow brightnessctl networkmanager pavucontrol i3lock ttf-jetbrains-mono-nerd git chromium
+sudo pacman -S --needed --noconfirm i3-wm polybar rofi picom feh alacritty thunar gvfs thunar-archive-plugin file-roller python-pillow brightnessctl networkmanager pavucontrol i3lock ttf-jetbrains-mono-nerd git chromium satty maim slop xclip
 
 echo "Enabling NetworkManager..."
 sudo systemctl enable --now NetworkManager
@@ -26,6 +26,7 @@ FILES=(
   .local/bin/choose-wallpaper
   .local/bin/wallpaper-colors
   .local/bin/apply-wallpaper-colors
+  .local/bin/screenshot
 )
 
 echo "Copying config files (existing different files are backed up)..."
@@ -38,7 +39,7 @@ for f in "${FILES[@]}"; do
 done
 
 echo "Making scripts executable..."
-chmod +x ~/.config/polybar/launch.sh ~/.config/polybar/scripts/*.sh ~/.config/themes/switch-theme.sh ~/.local/bin/choose-theme ~/.local/bin/choose-wallpaper ~/.local/bin/wallpaper-colors ~/.local/bin/apply-wallpaper-colors
+chmod +x ~/.config/polybar/launch.sh ~/.config/polybar/scripts/*.sh ~/.config/themes/switch-theme.sh ~/.local/bin/choose-theme ~/.local/bin/choose-wallpaper ~/.local/bin/wallpaper-colors ~/.local/bin/apply-wallpaper-colors ~/.local/bin/screenshot
 
 echo "Detecting Wi-Fi interface..."
 WIFI="$(ls /sys/class/net | grep -E '^wl' | head -1 || true)"
