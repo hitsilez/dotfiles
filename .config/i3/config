@@ -209,3 +209,9 @@ bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl set 5%-
 
 # File manager
 bindsym $mod+Shift+f exec --no-startup-id thunar
+
+# Restore last wallpaper at startup
+exec --no-startup-id sh -c 'f=$(cat ~/.config/themes/current-wallpaper 2>/dev/null); [ -f "$f" ] && feh --bg-fill "$f"'
+
+# Open browser
+bindsym $mod+b exec --no-startup-id chromium
