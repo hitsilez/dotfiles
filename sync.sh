@@ -18,4 +18,5 @@ copy .local/bin/choose-theme
 copy .local/bin/choose-wallpaper
 copy .local/bin/wallpaper-colors
 copy .local/bin/apply-wallpaper-colors
+copy .local/bin/screenshot
 echo "Synced."

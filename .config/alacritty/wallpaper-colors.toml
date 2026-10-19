@@ -1,11 +1,11 @@
 [colors.primary]
-background = "#180C0C"
-foreground = "#F0E6E6"
+background = "#100C18"
+foreground = "#E9E6F0"
 
 [colors.cursor]
-text = "#180C0C"
-cursor = "#7F00FF"
+text = "#100C18"
+cursor = "#C65A39"
 
 [colors.selection]
-text = "#180C0C"
-background = "#7F00FF"
+text = "#100C18"
+background = "#C65A39"

@@ -1,8 +1,8 @@
 * {
-  bg: #180C0Cf2;
-  bg-alt: #301717;
-  fg: #F0E6E6;
-  accent: #7F00FF;
-  muted: #8F8383;
-  on-accent: #180C0C;
+  bg: #100C18f2;
+  bg-alt: #201730;
+  fg: #E9E6F0;
+  accent: #C65A39;
+  muted: #87838F;
+  on-accent: #100C18;
 }
