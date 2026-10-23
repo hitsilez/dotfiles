@@ -1,7 +1,7 @@
 # dotfiles
 
 My Arch Linux + i3 desktop: Polybar, Rofi, Picom, Alacritty, with colors that can follow the wallpaper.
-
+wallpapers on telegram :  https://t.me/hitsilez
 ## Install on a fresh Arch + i3 system
 
     sudo pacman -S --needed git
