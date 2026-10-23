@@ -5,7 +5,7 @@ My Arch Linux + i3 desktop: Polybar, Rofi, Picom, Alacritty, with colors that ca
 ## Install on a fresh Arch + i3 system
 
     sudo pacman -S --needed git
-    git clone https://github.com/tzmar/dotfiles.git
+    git clone https://github.com/hitsilez/dotfiles.git
     cd dotfiles && ./install.sh
 
 The script installs the packages, copies the configs (backing up anything it replaces), and detects your Wi-Fi interface.
