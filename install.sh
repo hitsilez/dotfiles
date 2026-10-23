@@ -4,7 +4,7 @@ set -e
 DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo "Installing packages..."
-sudo pacman -S --needed --noconfirm i3-wm polybar rofi picom feh alacritty thunar gvfs thunar-archive-plugin file-roller python-pillow brightnessctl networkmanager pavucontrol i3lock ttf-jetbrains-mono-nerd git chromium satty maim slop xclip
+sudo pacman -S --needed --noconfirm i3-wm polybar rofi picom feh alacritty thunar gvfs thunar-archive-plugin file-roller python-pillow brightnessctl networkmanager pavucontrol i3lock ttf-jetbrains-mono-nerd git chromium satty maim slop xclip xf86-input-libinput
 
 echo "Enabling NetworkManager..."
 sudo systemctl enable --now NetworkManager
@@ -63,3 +63,20 @@ echo "   ~/Pictures/Wallpapers/Sci-fi"
 echo "   ~/Pictures/Wallpapers/Motivational"
 echo "3. Log out, choose i3 at the login screen, log in."
 echo "===================================================="
+
+echo "Enabling touchpad tap-to-click..."
+sudo mkdir -p /etc/X11/xorg.conf.d
+if [ ! -f /etc/X11/xorg.conf.d/30-touchpad.conf ]; then
+  sudo tee /etc/X11/xorg.conf.d/30-touchpad.conf > /dev/null << EOC
+Section "InputClass"
+    Identifier "touchpad"
+    Driver "libinput"
+    MatchIsTouchpad "on"
+    Option "Tapping" "on"
+    Option "TappingButtonMap" "lrm"
+    Option "NaturalScrolling" "false"
+    Option "ClickMethod" "clickfinger"
+EndSection
+EOC
+  echo "Touchpad config written. Log out and back in for it to apply."
+fi
