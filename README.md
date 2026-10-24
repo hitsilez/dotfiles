@@ -31,3 +31,7 @@ To turn off wallpaper-based colors, delete `~/.config/themes/wallpaper-colors-on
 ## Updating this repo from my machine
 
     ~/dotfiles/sync.sh && cd ~/dotfiles && git add -A && git commit -m "Update" && git push
+
+## Wallpapers
+
+The wallpapers are too big for GitHub. Download the archive from https://t.me/hitsilez and save it in `~/Downloads` before running `install.sh`. The installer unpacks it into `~/Pictures/Wallpapers` and applies the first one. If you download it later, run `setup-wallpapers`.

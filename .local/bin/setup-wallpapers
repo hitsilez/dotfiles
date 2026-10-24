@@ -1,0 +1,78 @@
+#!/bin/bash
+# Finds a wallpaper archive (.rar or .zip) in ~/Downloads, unpacks it into
+# ~/Pictures/Wallpapers and applies the first wallpaper.
+set -e
+DEST="$HOME/Pictures/Wallpapers"
+mkdir -p "$DEST"
+
+mapfile -t ARCHIVES < <(find "$HOME/Downloads" -maxdepth 2 -type f \( -iname '*.rar' -o -iname '*.zip' \) 2>/dev/null)
+if [ "${#ARCHIVES[@]}" -eq 0 ]; then
+  echo "No .rar or .zip found in ~/Downloads."
+  echo "Download the wallpapers from https://t.me/hitsilez, then run: setup-wallpapers"
+  exit 0
+fi
+if [ "${#ARCHIVES[@]}" -eq 1 ]; then
+  ARCHIVE="${ARCHIVES[0]}"
+else
+  echo "More than one archive found. Pick the wallpapers:"
+  select ARCHIVE in "${ARCHIVES[@]}"; do [ -n "$ARCHIVE" ] && break; done
+fi
+[ -n "$ARCHIVE" ] || exit 0
+
+echo "Unpacking $ARCHIVE ..."
+TMP="$(mktemp -d)"
+case "${ARCHIVE,,}" in
+  *.rar) unrar x -o+ -idq "$ARCHIVE" "$TMP/" ;;
+  *.zip) unzip -q -o "$ARCHIVE" -d "$TMP" ;;
+esac
+
+FOUND=0
+for name in Christian Sci-fi Motivational; do
+  SRC="$(find "$TMP" -maxdepth 3 -type d -iname "${name//-/?}" | head -1)"
+  if [ -n "$SRC" ]; then
+    mkdir -p "$DEST/$name"
+    cp -rn "$SRC"/. "$DEST/$name"/ || true
+    FOUND=1
+  fi
+done
+if [ "$FOUND" = 0 ]; then
+  echo "No Christian / Sci-fi / Motivational folders found inside the archive."
+  echo "Copying everything into $DEST instead."
+  cp -rn "$TMP"/. "$DEST"/ || true
+fi
+rm -rf "$TMP"
+
+THEME="$(cat "$HOME/.config/themes/current" 2>/dev/null || echo Sci-fi)"
+FIRST="$(find "$DEST/$THEME" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) 2>/dev/null | sort | head -1)"
+[ -n "$FIRST" ] || FIRST="$(find "$DEST" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) 2>/dev/null | sort | head -1)"
+if [ -z "$FIRST" ]; then echo "No images found."; exit 0; fi
+
+echo "$FIRST" > "$HOME/.config/themes/current-wallpaper"
+
+ACCENT="$(python3 - "$FIRST" << 'PY'
+import sys, colorsys
+from PIL import Image
+im = Image.open(sys.argv[1]).convert("RGB")
+im.thumbnail((160, 160))
+q = im.quantize(colors=16)
+pal = q.getpalette()
+best, score = None, 0
+for count, idx in q.getcolors():
+    r, g, b = pal[idx*3:idx*3+3]
+    h, s, v = colorsys.rgb_to_hsv(r/255, g/255, b/255)
+    if s >= 0.25 and v >= 0.25 and s*v > score:
+        best, score = (r, g, b), s*v
+print("#%02X%02X%02X" % best if best else "#0A84FF")
+PY
+)"
+
+COLORS="$HOME/.config/polybar/theme-colors.ini"
+[ -f "$COLORS" ] && sed -i "s/^accent = .*/accent = $ACCENT/" "$COLORS" || true
+
+if [ -n "$DISPLAY" ]; then
+  feh --bg-fill "$FIRST" || true
+  "$HOME/.config/polybar/launch.sh" || true
+fi
+
+echo "Wallpaper set: $FIRST"
+echo "To make the login screen match, run: set-login-background"

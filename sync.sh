@@ -24,4 +24,5 @@ copy .local/bin/wallpaper-colors
 copy .local/bin/apply-wallpaper-colors
 copy .local/bin/screenshot
 copy .local/bin/set-login-background
+copy .local/bin/setup-wallpapers
 echo "Synced."
