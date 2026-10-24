@@ -119,7 +119,7 @@ EndSection
 EOC
 fi
 mkdir -p "$HOME/Pictures/Wallpapers/Christian" "$HOME/Pictures/Wallpapers/Sci-fi" "$HOME/Pictures/Wallpapers/Motivational" "$HOME/Pictures/Screenshots"
-[ -f "$HOME/.config/themes/current" ] || echo "Sci-fi" > "$HOME/.config/themes/current"
+[ -f "$HOME/.config/themes/current-theme" ] || echo "Sci-fi" > "$HOME/.config/themes/current-theme"
 touch "$HOME/.config/themes/wallpaper-colors-on"
 
 echo "== 7/8 Wallpapers =="

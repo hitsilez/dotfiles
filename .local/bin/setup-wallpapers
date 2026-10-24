@@ -42,7 +42,7 @@ if [ "$FOUND" = 0 ]; then
 fi
 rm -rf "$TMP"
 
-THEME="$(cat "$HOME/.config/themes/current" 2>/dev/null || echo Sci-fi)"
+THEME="$(cat "$HOME/.config/themes/current-theme" 2>/dev/null || echo Sci-fi)"
 FIRST="$(find "$DEST/$THEME" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) 2>/dev/null | sort | head -1)"
 [ -n "$FIRST" ] || FIRST="$(find "$DEST" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) 2>/dev/null | sort | head -1)"
 if [ -z "$FIRST" ]; then echo "No images found."; exit 0; fi
