@@ -1,31 +1,49 @@
-#!/bin/bash
-IFACE="wlan0"
-note() { command -v notify-send >/dev/null && notify-send "Wi-Fi" "$1"; }
+#!/usr/bin/env bash
 
-nmcli device wifi rescan ifname "$IFACE" >/dev/null 2>&1
-sleep 1
+set -u
 
-list=$(nmcli -t -f SIGNAL,SECURITY,SSID device wifi list ifname "$IFACE" \
-  | awk -F: '{ssid=$3; for(i=4;i<=NF;i++) ssid=ssid":"$i; gsub(/\\/,"",ssid); if(ssid!="") print $1"%  "($2==""?"open":"secured")"  "ssid}' \
-  | sort -rn)
+ROFI="rofi -dmenu -i -p Wi-Fi"
 
-[ -z "$list" ] && { note "No networks found"; exit 1; }
+# Refresh the list of nearby Wi-Fi networks.
+nmcli device wifi rescan >/dev/null 2>&1
+sleep 2
 
-choice=$(echo "$list" | rofi -dmenu -i -p "Wi-Fi" -no-custom)
-[ -z "$choice" ] && exit 0
+mapfile -t networks < <(
+    nmcli -t -f SSID device wifi list --rescan no |
+    sed 's/\\:/\:/g' |
+    sed '/^[[:space:]]*$/d' |
+    sort -u
+)
 
-ssid=$(echo "$choice" | sed -E 's/^[0-9]+%  (open|secured)  //')
-
-if nmcli device wifi connect "$ssid" ifname "$IFACE" >/dev/null 2>&1; then
-  note "Connected to $ssid"
-  exit 0
+if [ "${#networks[@]}" -eq 0 ]; then
+    notify-send "Wi-Fi" "No networks found. Check that Wi-Fi is enabled."
+    exit 1
 fi
 
-pw=$(rofi -dmenu -password -p "Password for $ssid" -lines 0)
-[ -z "$pw" ] && exit 0
+ssid=$(printf '%s\n' "${networks[@]}" | eval "$ROFI")
 
-if nmcli device wifi connect "$ssid" password "$pw" ifname "$IFACE" >/dev/null 2>&1; then
-  note "Connected to $ssid"
+[ -n "$ssid" ] || exit 0
+
+# Prefer an existing saved connection when its profile name matches.
+if nmcli -t -f NAME connection show | grep -Fxq "$ssid"; then
+    nmcli connection up id "$ssid" ||
+        notify-send "Wi-Fi" "Could not connect to $ssid"
+    exit
+fi
+
+# Try connecting without a password first (for open networks).
+if nmcli --wait 15 device wifi connect "$ssid"; then
+    notify-send "Wi-Fi" "Connected to $ssid"
+    exit 0
+fi
+
+# If a password is required, ask for it using Rofi.
+password=$(rofi -dmenu -password -p "Password for $ssid")
+
+[ -n "$password" ] || exit 0
+
+if nmcli --wait 30 device wifi connect "$ssid" password "$password"; then
+    notify-send "Wi-Fi" "Connected to $ssid"
 else
-  note "Could not connect to $ssid (wrong password?)"
+    notify-send "Wi-Fi" "Connection failed. Check the password or try again."
 fi

@@ -1,0 +1,39 @@
+#!/bin/bash
+# Sets the login screen (LightDM) background from the current wallpaper.
+# If no wallpaper has been picked yet, it makes a plain dark-gold gradient.
+WP="$(cat ~/.config/themes/current-wallpaper 2>/dev/null)"
+TMP="$(mktemp --suffix=.png)"
+
+if [ -f "$WP" ]; then
+  python3 -c "from PIL import Image; import sys; Image.open(sys.argv[1]).convert('RGB').save(sys.argv[2])" "$WP" "$TMP"
+else
+  python3 - "$TMP" << 'PY'
+from PIL import Image, ImageDraw
+import sys
+w, h = 1920, 1080
+top, bot = (16, 21, 28), (60, 46, 20)
+img = Image.new("RGB", (w, h))
+d = ImageDraw.Draw(img)
+for y in range(h):
+    t = y / h
+    d.line([(0, y), (w, y)], fill=tuple(int(top[i] + (bot[i] - top[i]) * t) for i in range(3)))
+img.save(sys.argv[1])
+PY
+fi
+
+sudo mkdir -p /usr/share/backgrounds /etc/lightdm
+sudo cp "$TMP" /usr/share/backgrounds/login-bg.png
+sudo chmod 644 /usr/share/backgrounds/login-bg.png
+rm -f "$TMP"
+
+[ -f /etc/lightdm/lightdm-gtk-greeter.conf ] && sudo cp /etc/lightdm/lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf.backup-$(date +%Y%m%d-%H%M%S)
+
+sudo tee /etc/lightdm/lightdm-gtk-greeter.conf > /dev/null << 'EOC'
+[greeter]
+background=/usr/share/backgrounds/login-bg.png
+font-name=JetBrainsMono Nerd Font 11
+clock-format=%a %d %b  %H:%M
+indicators=~host;~spacer;~clock;~spacer;~session;~power
+position=50%,center
+EOC
+echo "Login screen background updated."

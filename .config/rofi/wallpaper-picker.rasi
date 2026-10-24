@@ -1,0 +1,79 @@
+configuration {
+    show-icons: true;
+    matching: "fuzzy";
+    sorting-method: "fzf";
+}
+
+* {
+    background: #17171F;
+    foreground: #F5F5F7;
+    accent: #0A84FF;
+    selected-background: #292936;
+    selected-foreground: #FFFFFF;
+    border-color: #383844;
+}
+
+window {
+    width: 820px;
+    border: 1px;
+    border-radius: 18px;
+    padding: 18px;
+    background-color: @background;
+}
+
+mainbox {
+    spacing: 12px;
+    background-color: transparent;
+}
+
+inputbar {
+    padding: 12px;
+    border-radius: 12px;
+    background-color: #24242E;
+    children: [ prompt, entry ];
+    spacing: 10px;
+}
+
+prompt {
+    text-color: @accent;
+}
+
+entry {
+    text-color: @foreground;
+    placeholder: "Search wallpapers...";
+}
+
+listview {
+    columns: 1;
+    lines: 6;
+    fixed-height: true;
+    spacing: 8px;
+    scrollbar: true;
+    background-color: transparent;
+}
+
+element {
+    padding: 8px;
+    border-radius: 12px;
+    spacing: 14px;
+    background-color: transparent;
+    orientation: horizontal;
+}
+
+element-icon {
+    size: 180px;
+    border-radius: 8px;
+}
+
+element-text {
+    vertical-align: 0.5;
+    text-color: @foreground;
+    background-color: transparent;
+}
+
+element selected {
+    background-color: @selected-background;
+    text-color: @selected-foreground;
+    border: 1px;
+    border-color: @accent;
+}

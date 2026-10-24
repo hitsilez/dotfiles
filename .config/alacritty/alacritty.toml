@@ -1,2 +1,52 @@
-[general]
-import = ["~/.config/alacritty/wallpaper-colors.toml"]
+[window]
+dimensions = { columns = 110, lines = 32 }
+padding = { x = 18, y = 16 }
+dynamic_padding = true
+decorations = "Full"
+opacity = 0.92
+title = "Alacritty — Frosted Glass"
+
+[scrolling]
+history = 10000
+multiplier = 3
+
+[font]
+normal = { family = "JetBrainsMono Nerd Font", style = "Regular" }
+bold = { family = "JetBrainsMono Nerd Font", style = "Bold" }
+italic = { family = "JetBrainsMono Nerd Font", style = "Italic" }
+size = 11.5
+
+[cursor]
+style = { shape = "Block", blinking = "On" }
+blink_interval = 600
+unfocused_hollow = true
+
+[selection]
+save_to_clipboard = false
+
+[mouse]
+hide_when_typing = true
+
+[colors.primary]
+background = "#111318"
+foreground = "#E8EAF0"
+
+[colors.normal]
+black = "#171920"
+red = "#FF5F57"
+green = "#34C759"
+yellow = "#FFCC66"
+blue = "#0A84FF"
+magenta = "#BF8BFF"
+cyan = "#64D2FF"
+white = "#E8EAF0"
+
+[colors.bright]
+black = "#777D8B"
+red = "#FF6961"
+green = "#5FE080"
+yellow = "#FFD780"
+blue = "#409CFF"
+magenta = "#D0A9FF"
+cyan = "#7DE3FF"
+white = "#FFFFFF"

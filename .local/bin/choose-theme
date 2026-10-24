@@ -1,9 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-choice=$(printf '✝  Christian\n⌘  Sci-fi\n▲  Motivational' | rofi -dmenu -i -p 'Choose Theme')
+THEME_SCRIPT="/home/tsilez/.config/themes/switch-theme.sh"
 
-case "$choice" in
-  *Christian*) ~/.config/themes/switch-theme.sh Christian ;;
-  *Sci-fi*) ~/.config/themes/switch-theme.sh Sci-fi ;;
-  *Motivational*) ~/.config/themes/switch-theme.sh Motivational ;;
-esac
+CHOICE="$(
+  printf '%s\n' Christian Motivational Sci-Fi |
+    rofi -dmenu -i \
+      -p "Choose Theme" \
+      -theme-str 'window { width: 360px; }'
+)" || exit 0
+
+[[ -n "$CHOICE" ]] || exit 0
+
+exec "$THEME_SCRIPT" "$CHOICE"

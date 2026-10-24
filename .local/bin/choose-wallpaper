@@ -1,42 +1,435 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-THEME_FILE="$HOME/.config/themes/current"
-WALL_ROOT="$HOME/Pictures/Wallpapers"
+import os
+import subprocess
+import tkinter as tk
+from tkinter import messagebox
+from pathlib import Path
+from PIL import Image, ImageTk, ImageOps
 
-if [[ ! -f "$THEME_FILE" ]]; then
-    notify-send "Wallpaper menu" "Choose a theme first with Super+T."
-    exit 1
-fi
+HOME = Path("/home/tsilez")
+WALLPAPER_ROOT = HOME / "Pictures" / "Wallpapers"
+THEME_STATE = HOME / ".config/themes/current-theme"
+CURRENT_WALLPAPER = HOME / ".config/themes/current-wallpaper"
 
-THEME=$(cat "$THEME_FILE")
-WALL_DIR="$WALL_ROOT/$THEME"
+BG = "#0B1118"
+PANEL = "#111D29"
+FG = "#EAFBFF"
+MUTED = "#7D9AA8"
+ACCENT = "#55E6FF"
 
-if [[ ! -d "$WALL_DIR" ]]; then
-    notify-send "Wallpaper menu" "Folder not found: $WALL_DIR"
-    exit 1
-fi
+EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
-FILES=()
-while IFS= read -r -d '' file; do
-    FILES+=("$file")
-done < <(find "$WALL_DIR" -maxdepth 1 -type f \
-    \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
-    -print0 | sort -z)
+class WallpaperStudio:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Wallpaper Studio")
+        self.root.geometry("800x500")
+        self.root.update_idletasks()
 
-if [[ ${#FILES[@]} -eq 0 ]]; then
-    notify-send "Wallpaper menu" "No wallpapers found in $WALL_DIR"
-    exit 1
-fi
+        # Center the existing picker on the current screen.
+        width = 800
+        height = 500
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        x = max(0, (screen_width - width) // 2)
+        y = max(0, (screen_height - height) // 2)
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
 
-CHOICE=$(for file in "${FILES[@]}"; do
-    printf '%s\0icon\x1f%s\n' "$(basename "$file")" "$file"
-done | rofi -dmenu -i -p "$THEME" -theme "$HOME/.config/rofi/wallpaper.rasi" -me-select-entry "" -me-accept-entry MousePrimary)
+        # Make it behave like a floating launcher window.
+        self.root.attributes("-type", "dialog")
+        self.root.attributes("-topmost", True)
+        self.root.minsize(780, 480)
+        self.root.configure(bg=BG)
 
-[[ -z "$CHOICE" ]] && exit 0
+        self.files = []
+        self.active_index = None
+        self.preview_photo = None
+        self.resize_job = None
 
-SELECTED="$WALL_DIR/$CHOICE"
-if [[ -f "$SELECTED" ]]; then
-    feh --bg-fill "$SELECTED"
-    printf '%s\n' "$SELECTED" > "$HOME/.config/themes/current-wallpaper"
-    "$HOME/.local/bin/apply-wallpaper-colors" "$SELECTED"
-fi
+        if not THEME_STATE.is_file():
+            messagebox.showerror(
+                "Wallpaper Studio",
+                "Choose a theme first using choose-theme."
+            )
+            root.destroy()
+            return
+
+        theme = THEME_STATE.read_text().strip()
+        folder = WALLPAPER_ROOT / theme
+
+        if theme == "Sci-Fi" and not folder.is_dir():
+            folder = WALLPAPER_ROOT / "Sci-fi"
+
+        if not folder.is_dir():
+            messagebox.showerror(
+                "Wallpaper Studio",
+                f"Wallpaper folder not found:\n{folder}"
+            )
+            root.destroy()
+            return
+
+        self.files = sorted(
+            (p for p in folder.iterdir()
+             if p.is_file() and p.suffix.lower() in EXTENSIONS),
+            key=lambda p: p.name.lower()
+        )
+
+        if not self.files:
+            messagebox.showinfo(
+                "Wallpaper Studio",
+                f"No wallpapers found in:\n{folder}"
+            )
+            root.destroy()
+            return
+
+        self.theme = theme
+        self.build_ui()
+        self.listbox.selection_set(0)
+        self.show_preview(0)
+
+    def build_ui(self):
+        header = tk.Frame(self.root, bg=BG)
+        header.pack(fill="x", padx=22, pady=(18, 12))
+
+        tk.Label(
+            header, text="Wallpaper Studio",
+            bg=BG, fg=FG, font=("Sans", 19, "bold")
+        ).pack(side="left")
+
+        tk.Label(
+            header, text=self.theme,
+            bg=PANEL, fg=ACCENT, padx=12, pady=6,
+            font=("Sans", 10, "bold")
+        ).pack(side="right")
+
+        body = tk.Frame(self.root, bg=BG)
+        body.pack(fill="both", expand=True, padx=22, pady=8)
+
+        left = tk.Frame(body, bg=BG, width=330)
+        left.pack(side="left", fill="y", padx=(0, 20))
+        left.pack_propagate(False)
+
+        tk.Label(
+            left, text="YOUR WALLPAPERS",
+            bg=BG, fg=MUTED, font=("Sans", 9, "bold")
+        ).pack(anchor="w", pady=(0, 10))
+
+        list_panel = tk.Frame(left, bg=PANEL)
+        list_panel.pack(fill="both", expand=True)
+
+        scrollbar = tk.Scrollbar(
+            list_panel, orient="vertical"
+        )
+        scrollbar.pack(side="right", fill="y")
+
+        self.listbox = tk.Listbox(
+            list_panel,
+            bg=PANEL, fg=FG,
+            selectbackground="#173B4A",
+            selectforeground="#FFFFFF",
+            font=("Sans", 10),
+            relief="flat", borderwidth=0,
+            highlightthickness=0,
+            activestyle="none",
+            selectmode="browse",
+            yscrollcommand=scrollbar.set,
+            exportselection=False
+        )
+        self.listbox.pack(side="left", fill="both", expand=True)
+        scrollbar.config(command=self.listbox.yview)
+
+        for path in self.files:
+            self.listbox.insert("end", "   " + path.stem)
+
+        self.listbox.bind("<Motion>", self.on_hover)
+        self.listbox.bind("<Leave>", self.on_leave)
+        self.listbox.bind("<<ListboxSelect>>", self.on_select)
+        self.listbox.bind("<Button-1>", self.on_click)
+
+        # Keyboard navigation and shortcuts.
+        self.listbox.bind("<Up>", self.keyboard_move)
+        self.listbox.bind("<Down>", self.keyboard_move)
+        self.listbox.bind("<Left>", self.focus_list)
+        self.listbox.bind("<Right>", self.focus_preview)
+        self.listbox.bind("<Return>", self.apply_from_keyboard)
+        self.listbox.bind("<KP_Enter>", self.apply_from_keyboard)
+        self.root.bind("<Escape>", lambda event: self.root.destroy())
+        self.root.bind("<Control-f>", self.focus_search)
+        self.root.bind("<Home>", self.select_first)
+        self.root.bind("<End>", self.select_last)
+
+        self.listbox.focus_set()
+
+        right = tk.Frame(body, bg=BG)
+        right.pack(side="left", fill="both", expand=True)
+
+        tk.Label(
+            right, text="PREVIEW",
+            bg=BG, fg=MUTED, font=("Sans", 9, "bold")
+        ).pack(anchor="w", pady=(0, 10))
+
+        self.preview_frame = tk.Frame(right, bg=PANEL)
+        self.preview_frame.pack(fill="both", expand=True)
+
+        self.preview_label = tk.Label(
+            self.preview_frame,
+            bg=PANEL, fg=MUTED,
+            text="Hover over a wallpaper name",
+            font=("Sans", 11)
+        )
+        self.preview_label.pack(
+            fill="both", expand=True, padx=10, pady=10
+        )
+
+        self.name_label = tk.Label(
+            right, text="", bg=BG, fg=FG,
+            font=("Sans", 11, "bold"), anchor="w"
+        )
+        self.name_label.pack(fill="x", pady=(12, 3))
+
+        self.path_label = tk.Label(
+            right, text="", bg=BG, fg=MUTED,
+            font=("Sans", 9), anchor="w"
+        )
+        self.path_label.pack(fill="x")
+
+        footer = tk.Frame(self.root, bg=BG)
+        footer.pack(fill="x", padx=22, pady=(12, 18))
+
+        tk.Label(
+            footer, text=f"{len(self.files)} wallpapers",
+            bg=BG, fg=MUTED, font=("Sans", 9)
+        ).pack(side="left")
+
+        tk.Button(
+            footer, text="Cancel",
+            command=self.root.destroy,
+            bg=PANEL, fg=FG, activebackground="#383844",
+            activeforeground=FG, relief="flat",
+            padx=20, pady=9, cursor="hand2"
+        ).pack(side="right", padx=(10, 0))
+
+        tk.Button(
+            footer, text="Apply wallpaper",
+            command=self.apply_wallpaper,
+            bg=ACCENT, fg="#FFFFFF",
+            activebackground="#0066CC",
+            activeforeground="#FFFFFF",
+            relief="flat", padx=20, pady=9,
+            cursor="hand2"
+        ).pack(side="right")
+
+        self.root.bind("<Configure>", self.on_resize)
+
+    def show_preview(self, index):
+        if not 0 <= index < len(self.files):
+            return
+
+        path = self.files[index]
+        self.active_index = index
+        self.listbox.selection_clear(0, "end")
+        self.listbox.selection_set(index)
+        self.listbox.activate(index)
+
+        try:
+            with Image.open(path) as image:
+                image = ImageOps.exif_transpose(image).convert("RGB")
+                self.root.update_idletasks()
+
+                width = max(self.preview_frame.winfo_width() - 24, 300)
+                height = max(self.preview_frame.winfo_height() - 24, 200)
+
+                image.thumbnail(
+                    (width, height), Image.Resampling.LANCZOS
+                )
+                self.preview_photo = ImageTk.PhotoImage(image)
+
+            self.preview_label.configure(
+                image=self.preview_photo, text=""
+            )
+            self.name_label.configure(text=path.name)
+            self.path_label.configure(text=str(path))
+
+        except Exception as exc:
+            self.preview_photo = None
+            self.preview_label.configure(
+                image="", text=f"Cannot preview this image:\n{exc}"
+            )
+
+    def on_hover(self, event):
+        index = self.listbox.nearest(event.y)
+        if 0 <= index < len(self.files):
+            box = self.listbox.bbox(index)
+            if box and box[1] <= event.y <= box[1] + box[3]:
+                self.show_preview(index)
+
+    def on_leave(self, event):
+        # Keep the last preview visible while moving to the preview pane.
+        pass
+
+    def keyboard_move(self, event):
+        # Tkinter moves the list selection; update the preview afterward.
+        self.root.after_idle(self.on_select, event)
+        return None
+
+    def focus_list(self, event=None):
+        self.listbox.focus_set()
+        return "break"
+
+    def focus_preview(self, event=None):
+        # Return focus to the list; the preview is informational.
+        self.listbox.focus_set()
+        return "break"
+
+    def apply_from_keyboard(self, event=None):
+        self.apply_wallpaper()
+        return "break"
+
+    def select_first(self, event=None):
+        self.show_preview(0)
+        self.listbox.see(0)
+        return "break"
+
+    def select_last(self, event=None):
+        index = len(self.files) - 1
+        self.show_preview(index)
+        self.listbox.see(index)
+        return "break"
+
+    def focus_search(self, event=None):
+        self.search_text = ""
+        self.listbox.focus_set()
+        return "break"
+
+    def type_to_search(self, event):
+        if event.keysym in (
+            "Up", "Down", "Left", "Right", "Return",
+            "KP_Enter", "Escape", "Home", "End",
+            "Prior", "Next", "Shift_L", "Shift_R",
+            "Control_L", "Control_R", "Alt_L", "Alt_R"
+        ):
+            return None
+
+        if event.char and event.char.isprintable():
+            self.search_text += event.char.lower()
+
+            if self.search_after:
+                self.root.after_cancel(self.search_after)
+
+            self.search_after = self.root.after(
+                900, lambda: setattr(self, "search_text", "")
+            )
+
+            for i, path in enumerate(self.files):
+                if path.name.lower().startswith(self.search_text):
+                    self.show_preview(i)
+                    self.listbox.see(i)
+                    break
+
+        elif event.keysym == "BackSpace":
+            self.search_text = self.search_text[:-1]
+
+        return None
+
+    def on_select(self, event):
+        selected = self.listbox.curselection()
+        if selected:
+            self.show_preview(selected[0])
+
+    def on_click(self, event):
+        index = self.listbox.nearest(event.y)
+        if 0 <= index < len(self.files):
+            self.show_preview(index)
+
+    def on_resize(self, event):
+        if event.widget != self.root or self.active_index is None:
+            return
+        if self.resize_job:
+            self.root.after_cancel(self.resize_job)
+        self.resize_job = self.root.after(
+            180, lambda: self.show_preview(self.active_index)
+        )
+
+    def apply_wallpaper(self):
+        if self.active_index is None:
+            return
+
+        path = self.files[self.active_index]
+
+        try:
+            import colorsys
+            from PIL import Image
+
+            # Apply the selected wallpaper.
+            subprocess.run(
+                ["feh", "--no-fehbg", "--bg-fill", str(path)],
+                check=True
+            )
+
+            # Find a reasonably vivid accent color in the image.
+            with Image.open(path) as image:
+                image.thumbnail((120, 120))
+                image = image.convert("RGB").quantize(colors=12)
+                palette = image.getpalette()
+                total = sum(count for count, index in image.getcolors())
+
+                candidates = []
+                for count, index in image.getcolors():
+                    r, g, b = palette[index * 3:index * 3 + 3]
+                    h, saturation, value = colorsys.rgb_to_hsv(
+                        r / 255, g / 255, b / 255
+                    )
+                    if saturation >= 0.25 and value >= 0.25:
+                        score = saturation * value
+                        candidates.append((score, count, r, g, b))
+
+                if candidates:
+                    _, _, r, g, b = max(
+                        candidates, key=lambda item: item[0]
+                    )
+                    accent = f"#{r:02X}{g:02X}{b:02X}"
+                else:
+                    accent = "#0A84FF"
+
+            # Update Polybar's theme colors.
+            colors_file = (
+                Path.home() / ".config/polybar/theme-colors.ini"
+            )
+            colors_file.parent.mkdir(parents=True, exist_ok=True)
+            colors_file.write_text(
+                "[colors]\n"
+                "background = #E61C1C24\n"
+                "background-alt = #FF292936\n"
+                "foreground = #FFF5F5F7\n"
+                "muted = #FF9898A5\n"
+                f"accent = {accent}\n"
+            )
+
+            # Remember the selected wallpaper for future sessions.
+            CURRENT_WALLPAPER.parent.mkdir(
+                parents=True, exist_ok=True
+            )
+            CURRENT_WALLPAPER.write_text(str(path) + "\n")
+
+            # Restart Polybar so the new accent becomes visible.
+            launcher = Path.home() / ".config/polybar/launch.sh"
+            subprocess.run(
+                ["bash", str(launcher)],
+                check=True,
+                timeout=10
+            )
+
+            self.root.destroy()
+
+        except Exception as exc:
+            messagebox.showerror(
+                "Wallpaper or theme update failed",
+                f"{exc}\n\nWallpaper: {path}"
+            )
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = WallpaperStudio(root)
+    if root.winfo_exists():
+        root.mainloop()
