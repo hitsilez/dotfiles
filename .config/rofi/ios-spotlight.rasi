@@ -2,7 +2,7 @@
     font: "Sans 11";
     background-color: transparent;
     text-color: #f5f5f7;
-    accent: #0a84ff;
+    accent: #BA272D;
 }
 
 window {

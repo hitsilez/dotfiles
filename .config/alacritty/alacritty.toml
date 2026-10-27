@@ -1,9 +1,12 @@
+[general]
+import = ["~/.config/alacritty/wallpaper-colors.toml"]
+
 [window]
 dimensions = { columns = 110, lines = 32 }
 padding = { x = 18, y = 16 }
 dynamic_padding = true
 decorations = "Full"
-opacity = 0.92
+opacity = 1.0
 title = "Alacritty — Frosted Glass"
 
 [scrolling]
@@ -26,10 +29,6 @@ save_to_clipboard = false
 
 [mouse]
 hide_when_typing = true
-
-[colors.primary]
-background = "#111318"
-foreground = "#E8EAF0"
 
 [colors.normal]
 black = "#171920"

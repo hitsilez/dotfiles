@@ -1,39 +1,93 @@
 #!/bin/bash
-# Sets the login screen (LightDM) background from the current wallpaper.
-# If no wallpaper has been picked yet, it makes a plain dark-gold gradient.
+# Styles the LightDM login screen: dimmed, softly blurred wallpaper + dark glass theme.
 WP="$(cat ~/.config/themes/current-wallpaper 2>/dev/null)"
-TMP="$(mktemp --suffix=.png)"
+ACCENT="$(sed -n 's/^accent *= *#\([0-9A-Fa-f]\{6,8\}\)$/\1/p' ~/.config/polybar/theme-colors.ini 2>/dev/null | head -1)"
+ACCENT="${ACCENT:-0A84FF}"
+ACCENT="#${ACCENT: -6}"
 
-if [ -f "$WP" ]; then
-  python3 -c "from PIL import Image; import sys; Image.open(sys.argv[1]).convert('RGB').save(sys.argv[2])" "$WP" "$TMP"
-else
-  python3 - "$TMP" << 'PY'
-from PIL import Image, ImageDraw
+TMP="$(mktemp --suffix=.png)"
+python3 - "$WP" "$TMP" << 'PY'
 import sys
-w, h = 1920, 1080
-top, bot = (16, 21, 28), (60, 46, 20)
-img = Image.new("RGB", (w, h))
-d = ImageDraw.Draw(img)
-for y in range(h):
-    t = y / h
-    d.line([(0, y), (w, y)], fill=tuple(int(top[i] + (bot[i] - top[i]) * t) for i in range(3)))
-img.save(sys.argv[1])
+from pathlib import Path
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageOps
+src, out = sys.argv[1], sys.argv[2]
+W, H = 1920, 1080
+if src and Path(src).is_file():
+    img = ImageOps.exif_transpose(Image.open(src)).convert("RGB")
+    img = ImageOps.fit(img, (W, H), Image.Resampling.LANCZOS)
+    img = img.filter(ImageFilter.GaussianBlur(3))
+    img = ImageEnhance.Brightness(img).enhance(0.62)
+else:
+    top, bot = (16, 21, 28), (60, 46, 20)
+    img = Image.new("RGB", (W, H))
+    d = ImageDraw.Draw(img)
+    for y in range(H):
+        t = y / H
+        d.line([(0, y), (W, y)], fill=tuple(int(top[i] + (bot[i] - top[i]) * t) for i in range(3)))
+img.save(out)
 PY
-fi
 
 sudo mkdir -p /usr/share/backgrounds /etc/lightdm
 sudo cp "$TMP" /usr/share/backgrounds/login-bg.png
 sudo chmod 644 /usr/share/backgrounds/login-bg.png
 rm -f "$TMP"
 
-[ -f /etc/lightdm/lightdm-gtk-greeter.conf ] && sudo cp /etc/lightdm/lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf.backup-$(date +%Y%m%d-%H%M%S)
+THEME=/usr/share/themes/HitsilezLogin
+sudo mkdir -p "$THEME/gtk-3.0"
+sudo tee "$THEME/index.theme" > /dev/null << EOC
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=HitsilezLogin
+Comment=Dark glass login theme
+Encoding=UTF-8
 
+[X-GNOME-Metatheme]
+GtkTheme=HitsilezLogin
+EOC
+sudo tee "$THEME/gtk-3.0/gtk.css" > /dev/null << EOC
+@import url("resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained-dark.css");
+@define-color accent $ACCENT;
+
+#login_window {
+  background-color: rgba(14, 17, 22, 0.78);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  padding: 28px;
+}
+#panel_window {
+  background-color: rgba(14, 17, 22, 0.55);
+  color: #E8EAF0;
+}
+entry {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #E8EAF0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 8px 12px;
+  caret-color: @accent;
+}
+entry:focus { border-color: @accent; }
+button {
+  background-image: none;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #E8EAF0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 8px 18px;
+}
+button:hover { border-color: @accent; background-color: rgba(255, 255, 255, 0.14); }
+EOC
+
+sudo cp -n /etc/lightdm/lightdm-gtk-greeter.conf /etc/lightdm/lightdm-gtk-greeter.conf.backup-original 2>/dev/null
 sudo tee /etc/lightdm/lightdm-gtk-greeter.conf > /dev/null << 'EOC'
 [greeter]
 background=/usr/share/backgrounds/login-bg.png
-font-name=JetBrainsMono Nerd Font 11
+user-background=false
+theme-name=HitsilezLogin
+font-name=Noto Sans 11
+hide-user-image=true
 clock-format=%a %d %b  %H:%M
 indicators=~host;~spacer;~clock;~spacer;~session;~power
 position=50%,center
 EOC
-echo "Login screen background updated."
+echo "Login screen updated. Log out to see it."

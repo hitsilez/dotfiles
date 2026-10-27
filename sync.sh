@@ -8,6 +8,8 @@ copy .config/polybar/theme-colors.ini
 copy .config/polybar/launch.sh
 copy .config/polybar/scripts/wifi-menu.sh
 copy .config/polybar/scripts/power-menu.sh
+copy .config/polybar/scripts/bluetooth-menu.sh
+copy .config/polybar/scripts/bluetooth-status.sh
 copy .config/rofi/config.rasi
 copy .config/rofi/wallpaper.rasi
 copy .config/rofi/colors.rasi
@@ -24,5 +26,6 @@ copy .local/bin/wallpaper-colors
 copy .local/bin/apply-wallpaper-colors
 copy .local/bin/screenshot
 copy .local/bin/set-login-background
+copy .local/bin/apply-accent
 copy .local/bin/setup-wallpapers
 echo "Synced."

@@ -19,7 +19,7 @@ sudo pacman -S --needed --noconfirm \
   maim slop xclip satty \
   ttf-jetbrains-mono-nerd noto-fonts \
   lightdm lightdm-gtk-greeter \
-  git base-devel unrar unzip xdg-utils
+  git base-devel unrar unzip xdg-utils bluez bluez-utils
 
 echo "== 2/8 Audio and extras (a failure here only warns) =="
 sudo pacman -S --needed --noconfirm pipewire pipewire-pulse pipewire-alsa wireplumber libpulse pamixer playerctl \
@@ -66,6 +66,8 @@ FILES=(
   .config/polybar/launch.sh
   .config/polybar/scripts/wifi-menu.sh
   .config/polybar/scripts/power-menu.sh
+  .config/polybar/scripts/bluetooth-menu.sh
+  .config/polybar/scripts/bluetooth-status.sh
   .config/rofi/config.rasi
   .config/rofi/wallpaper.rasi
   .config/rofi/colors.rasi
@@ -82,6 +84,7 @@ FILES=(
   .local/bin/apply-wallpaper-colors
   .local/bin/screenshot
   .local/bin/set-login-background
+  .local/bin/apply-accent
   .local/bin/setup-wallpapers
 )
 for f in "${FILES[@]}"; do
@@ -95,7 +98,7 @@ for f in "${FILES[@]}"; do
 done
 
 chmod +x "$HOME"/.config/polybar/launch.sh "$HOME"/.config/polybar/scripts/*.sh "$HOME"/.config/themes/switch-theme.sh \
-  "$HOME"/.local/bin/{choose-theme,choose-wallpaper,wallpaper-colors,apply-wallpaper-colors,screenshot,set-login-background,setup-wallpapers} 2>/dev/null || true
+  "$HOME"/.local/bin/{choose-theme,choose-wallpaper,wallpaper-colors,apply-wallpaper-colors,screenshot,set-login-background,setup-wallpapers,apply-accent} 2>/dev/null || true
 
 WIFI="$(ls /sys/class/net | grep -E '^wl' | head -1 || true)"
 if [ -n "$WIFI" ] && [ "$WIFI" != "wlan0" ]; then
