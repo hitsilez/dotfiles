@@ -85,6 +85,7 @@ FILES=(
   .local/bin/screenshot
   .local/bin/set-login-background
   .local/bin/apply-accent
+  .local/bin/refresh-login-bg
   .local/bin/setup-wallpapers
 )
 for f in "${FILES[@]}"; do
@@ -98,7 +99,7 @@ for f in "${FILES[@]}"; do
 done
 
 chmod +x "$HOME"/.config/polybar/launch.sh "$HOME"/.config/polybar/scripts/*.sh "$HOME"/.config/themes/switch-theme.sh \
-  "$HOME"/.local/bin/{choose-theme,choose-wallpaper,wallpaper-colors,apply-wallpaper-colors,screenshot,set-login-background,setup-wallpapers,apply-accent} 2>/dev/null || true
+  "$HOME"/.local/bin/{choose-theme,choose-wallpaper,wallpaper-colors,apply-wallpaper-colors,screenshot,set-login-background,setup-wallpapers,apply-accent,refresh-login-bg} 2>/dev/null || true
 
 WIFI="$(ls /sys/class/net | grep -E '^wl' | head -1 || true)"
 if [ -n "$WIFI" ] && [ "$WIFI" != "wlan0" ]; then
@@ -133,6 +134,8 @@ read -r -p "Press Enter to continue (it is fine if you have not downloaded it ye
 
 echo "== 8/8 Login screen =="
 "$HOME/.local/bin/set-login-background" || warn "login background skipped"
+# let the wallpaper picker refresh the login image without sudo
+[ -f /usr/share/backgrounds/login-bg.png ] && sudo chown "$USER" /usr/share/backgrounds/login-bg.png || true
 
 echo ""
 echo "===================================================="

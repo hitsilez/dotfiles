@@ -27,5 +27,6 @@ copy .local/bin/apply-wallpaper-colors
 copy .local/bin/screenshot
 copy .local/bin/set-login-background
 copy .local/bin/apply-accent
+copy .local/bin/refresh-login-bg
 copy .local/bin/setup-wallpapers
 echo "Synced."

@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+# Rebuilds the dimmed+blurred login background from the current wallpaper.
+# Needs login-bg.png to be owned by the user (one-time chown). No sudo.
+import os, sys
+from pathlib import Path
+from PIL import Image, ImageEnhance, ImageFilter
+
+src_file = Path.home() / ".config/themes/current-wallpaper"
+dst = Path("/usr/share/backgrounds/login-bg.png")
+
+try:
+    wp = Path(src_file.read_text().strip())
+    if not wp.is_file() or not os.access(dst, os.W_OK):
+        sys.exit(0)
+    img = Image.open(wp).convert("RGB")
+    img.thumbnail((1920, 1080))
+    img = img.filter(ImageFilter.GaussianBlur(3))
+    img = ImageEnhance.Brightness(img).enhance(0.62)
+    img.save(dst, "PNG")
+except Exception:
+    sys.exit(0)

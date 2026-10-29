@@ -220,7 +220,6 @@ bindsym $mod+Shift+e exec --no-startup-id ~/.config/polybar/scripts/power-menu.s
 
 # Screenshot
 bindsym Print exec --no-startup-id ~/.local/bin/screenshot
-exec --no-startup-id ~/.fehbg
 
 # Center the Wallpaper Studio as a floating popup
 for_window [title="Wallpaper Studio"] floating enable, border pixel 0, move position center
