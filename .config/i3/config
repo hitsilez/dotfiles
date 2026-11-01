@@ -197,6 +197,7 @@ bindsym $mod+Control+space exec --no-startup-id ~/.local/bin/choose-wallpaper
 # Omarchy-inspired window spacing
 gaps inner 15
 gaps outer 10
+gaps top 4
 smart_gaps on
 
 # Start Picom for rounded corners and window shadows

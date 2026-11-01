@@ -12,7 +12,7 @@ fi
 echo "== 1/8 Core packages =="
 sudo pacman -S --needed --noconfirm \
   xorg-server xorg-xinit xorg-xinput xf86-input-libinput \
-  i3-wm i3lock xss-lock polybar rofi picom feh alacritty \
+  i3-wm i3lock xss-lock polybar rofi picom feh alacritty zsh zsh-autosuggestions zsh-syntax-highlighting \
   thunar gvfs thunar-archive-plugin file-roller \
   python-pillow tk brightnessctl pavucontrol \
   networkmanager network-manager-applet \
@@ -76,6 +76,7 @@ FILES=(
   .config/rofi/wallpaper-picker.rasi
   .config/alacritty/alacritty.toml
   .config/alacritty/wallpaper-colors.toml
+  .zshrc
   .config/picom/picom.conf
   .config/themes/switch-theme.sh
   .local/bin/choose-theme

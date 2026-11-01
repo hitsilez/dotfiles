@@ -18,6 +18,7 @@ copy .config/rofi/ios-spotlight.rasi
 copy .config/rofi/wallpaper-picker.rasi
 copy .config/alacritty/alacritty.toml
 copy .config/alacritty/wallpaper-colors.toml
+copy .zshrc
 copy .config/picom/picom.conf
 copy .config/themes/switch-theme.sh
 copy .local/bin/choose-theme
