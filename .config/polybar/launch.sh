@@ -13,3 +13,5 @@ sleep 1
 polybar -c "$CFG" main \
   >> "$HOME/.config/polybar/polybar.log" 2>&1 &
 polybar -c "$CFG" clock >> "$HOME/.config/polybar/polybar.log" 2>&1 &
+polybar -c "$CFG" ws >> "$HOME/.config/polybar/polybar.log" 2>&1 &
+polybar -c "$CFG" title >> "$HOME/.config/polybar/polybar.log" 2>&1 &
