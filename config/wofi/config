@@ -1,0 +1,14 @@
+location=center
+show=drun
+prompt=Search applications
+matching=fuzzy
+insensitive=true
+allow_images=true
+image_size=24
+hide_scroll=true
+gtk_dark=true
+no_actions=true
+columns=1
+term=alacritty
+width=520
+height=280

@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+# Wi-Fi menu: lists networks in wofi and connects with nmcli.
+
+# ----- Menu size (change these numbers to taste) -----
+WIDTH=320
+ROW=36         # height of one row
+PAD=60
+MAXROWS=8      # most rows shown before it scrolls
+SCALE=70
+STYLE="${XDG_RUNTIME_DIR:-/tmp}/wifi-menu.css"; cat "$HOME/.config/wofi/style.css" "$HOME/.config/wofi/wifi-extra.css" > "$STYLE" 2>/dev/null
+
+menu() {   # usage: menu <number of rows> <extra wofi options>
+  local rows=$1; shift
+  local h=$(( (PAD + ROW * rows) * SCALE / 100 )); if [ "$h" -lt 90 ]; then h=90; fi; wofi --dmenu --style "$STYLE" --width "$WIDTH" --height "$h" "$@"
+}
+
+err() { notify-send -u critical "Wi-Fi" "$1"; }
+WIFI_DEV=$(nmcli -t -f DEVICE,TYPE device | awk -F: '$2=="wifi"{print $1; exit}')
+
+# Wi-Fi switched off? Offer to turn it on.
+if [ "$(nmcli radio wifi)" != "enabled" ]; then
+  pick=$(printf '%s\n' "Turn Wi-Fi on" | menu 1 --prompt "Wi-Fi is off") || exit 0
+  [ "$pick" = "Turn Wi-Fi on" ] && nmcli radio wifi on
+  exit 0
+fi
+
+# Ask for a fresh scan, then give it a moment
+nmcli device wifi rescan >/dev/null 2>&1
+sleep 1
+
+declare -a labels ssids secures currents
+declare -A seen
+
+# The network you are on comes first, then the strongest signals
+while IFS='|' read -r inuse sig sec ssid; do
+  [ -z "$ssid" ] && continue
+  [ -n "${seen[$ssid]}" ] && continue
+  seen[$ssid]=1
+
+  mark=" "; cur=0
+  if [ "$inuse" = "*" ]; then mark="✓"; cur=1; fi
+
+  if   [ "$sig" -ge 75 ]; then bars="▂▄▆█"
+  elif [ "$sig" -ge 50 ]; then bars="▂▄▆ "
+  elif [ "$sig" -ge 25 ]; then bars="▂▄  "
+  else                         bars="▂   "
+  fi
+
+  if [ "$sec" = "--" ] || [ -z "$sec" ]; then sc=0; lock="open   "; else sc=1; lock="secured"; fi
+
+  labels+=("$mark $bars  $lock  $ssid")
+  ssids+=("$ssid"); secures+=("$sc"); currents+=("$cur")
+done < <(nmcli -t -e no -f IN-USE,SIGNAL,SECURITY,SSID device wifi list --rescan no \
+          | awk -F: '{s=$4; for(i=5;i<=NF;i++) s=s ":" $i; print $1 "|" $2 "|" $3 "|" s}' \
+          | sort -t'|' -k1,1r -k2,2nr)
+
+# How many rows to show (networks + the "turn off" row), capped
+rows=$(( ${#labels[@]} + 1 ))
+[ "$rows" -gt "$MAXROWS" ] && rows=$MAXROWS
+
+choice=$(printf '%s\n' "Turn Wi-Fi off" "${labels[@]}" | menu "$rows" --prompt "Wi-Fi") || exit 0
+[ -z "$choice" ] && exit 0
+
+if [ "$choice" = "Turn Wi-Fi off" ]; then
+  nmcli radio wifi off
+  exit 0
+fi
+
+# Work out which network was picked
+idx=-1
+for i in "${!labels[@]}"; do
+  if [ "${labels[$i]}" = "$choice" ]; then idx=$i; break; fi
+done
+[ "$idx" -ge 0 ] || exit 0
+ssid="${ssids[$idx]}"; secure="${secures[$idx]}"; current="${currents[$idx]}"
+
+# Have you connected to this network before?
+saved=0
+if nmcli -t -e no -f NAME,TYPE connection show \
+   | awk -F: '$NF=="802-11-wireless"{n=$1; for(i=2;i<NF;i++) n=n":"$i; print n}' \
+   | grep -Fxq -- "$ssid"; then
+  saved=1
+fi
+
+forget() { nmcli connection delete id "$ssid" >/dev/null 2>&1 || err "Could not forget $ssid"; }
+
+# The network you are on now
+if [ "$current" = "1" ]; then
+  act=$(printf '%s\n' "Disconnect" "Forget this network" | menu 2 --prompt "$ssid") || exit 0
+  case "$act" in
+    "Disconnect")          nmcli connection down id "$ssid" >/dev/null 2>&1 || err "Could not disconnect" ;;
+    "Forget this network") forget ;;
+  esac
+  exit 0
+fi
+
+# A network you used before
+if [ "$saved" = "1" ]; then
+  act=$(printf '%s\n' "Connect" "Forget this network" | menu 2 --prompt "$ssid") || exit 0
+  case "$act" in
+    "Connect")             nmcli --wait 20 connection up id "$ssid" ifname "$WIFI_DEV" >/dev/null 2>&1 || err "Could not connect to $ssid" ;;
+    "Forget this network") forget ;;
+  esac
+  exit 0
+fi
+
+# A new network
+if [ "$secure" = "1" ]; then
+  pass=$(menu 0 --password --prompt "Password for $ssid" < /dev/null) || exit 0
+  [ -z "$pass" ] && exit 0
+  nmcli --wait 20 device wifi connect "$ssid" password "$pass" >/dev/null 2>&1 && exit 0
+else
+  nmcli --wait 20 device wifi connect "$ssid" >/dev/null 2>&1 && exit 0
+fi
+
+# It failed: remove the half-made entry so a wrong password isn't remembered
+nmcli connection delete id "$ssid" >/dev/null 2>&1
+err "Could not connect to $ssid. Check the password and try again."

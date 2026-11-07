@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+WALLPAPER_FILE="$HOME/.cache/last-wallpaper"
+LOCK_WALLPAPER="$HOME/.cache/hyprlock-wallpaper"
+
+if [[ ! -f "$WALLPAPER_FILE" ]]; then
+    notify-send "Lock screen" "No saved wallpaper was found."
+    exit 1
+fi
+
+WALLPAPER="$(cat "$WALLPAPER_FILE")"
+
+if [[ ! -f "$WALLPAPER" ]]; then
+    notify-send "Lock screen" "The saved wallpaper image cannot be found."
+    exit 1
+fi
+
+ln -sfn -- "$WALLPAPER" "$LOCK_WALLPAPER"
+exec hyprlock

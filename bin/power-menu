@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Power menu: Lock, Sleep, Log out, Restart, Shut down.
+
+# ----- Menu size -----
+WIDTH=260
+ROW=36
+PAD=60
+SCALE=70
+STYLE="${XDG_RUNTIME_DIR:-/tmp}/power-menu.css"
+cat "$HOME/.config/wofi/style.css" "$HOME/.config/wofi/power-extra.css" > "$STYLE" 2>/dev/null
+
+menu() {   # usage: menu <number of rows> <extra wofi options>
+  local rows=$1; shift
+  local h=$(( (PAD + ROW * rows) * SCALE / 100 ))
+  [ "$h" -lt 90 ] && h=90
+  wofi --dmenu --style "$STYLE" --width "$WIDTH" --height "$h" "$@"
+}
+
+# Ask "are you sure?" before the actions that close things
+confirm() {
+  local ans
+  ans=$(printf '%s\n' "Yes, $1" "Cancel" | menu 2 --prompt "$1?") || return 1
+  [ "$ans" = "Yes, $1" ]
+}
+
+choice=$(printf '%s\n' "Lock" "Sleep" "Log out" "Restart" "Shut down" | menu 5 --prompt "Power") || exit 0
+
+case "$choice" in
+  "Lock")      "$HOME/.local/bin/lock-screen" ;;
+  "Sleep")     systemctl suspend ;;
+  "Log out")   confirm "Log out"   && loginctl terminate-user "$USER" ;;
+  "Restart")   confirm "Restart"   && systemctl reboot ;;
+  "Shut down") confirm "Shut down" && systemctl poweroff ;;
+esac

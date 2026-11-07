@@ -1,0 +1,10 @@
+[SddmGreeterTheme]
+Name=Midnight Glass
+Description=Dark glass SDDM theme for Hyprland
+Author=Tsilez
+Copyright=2026
+License=CC-BY-SA
+Type=sddm-theme
+Version=1.0
+MainScript=Main.qml
+ConfigFile=theme.conf

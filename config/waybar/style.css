@@ -1,0 +1,106 @@
+@import "colors.css";
+/* ===== COLORS (the theme switcher will change these later) ===== */
+
+* {
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 12px;
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+}
+
+window#waybar {
+  background: transparent;
+}
+
+.modules-left,
+.modules-center,
+.modules-right {
+  background: @pill_bg;
+  color: @pill_fg;
+  border-radius: 12px;
+  padding: 0 5px;
+}
+
+#network, #clock, #cpu, #memory, #disk,
+#backlight, #pulseaudio, #battery {
+  padding: 0 5px;
+  color: @pill_fg;
+}
+
+#custom-logo {
+  padding: 0 6px;
+  font-size: 14px;
+  color: @pill_fg;
+}
+
+#workspaces button {
+  padding: 0 5px;
+  margin: 2px 2px;
+  border-radius: 8px;
+  background: transparent;
+  background-image: none;
+  box-shadow: none;
+  text-shadow: none;
+  color: @pill_fg;
+}
+
+#workspaces button.active {
+  background: @active_bg;
+}
+
+#battery.warning { color: @warn; }
+#battery.critical { color: @crit; }
+
+/* ===== Workspace numbers in circles ===== */
+#workspaces button {
+  min-width: 16px;
+  min-height: 16px;
+  padding: 0;
+  margin: 2px 3px;
+  border: 1px solid @pill_fg;
+  border-radius: 50%;
+  background: transparent;
+  color: @pill_fg;
+}
+
+#workspaces button.active {
+  background: @pill_fg;
+  color: @pill_bg;
+}
+
+/* ===== Wifi, bluetooth and the arrow ===== */
+#bluetooth, #custom-arrow {
+  padding: 0 5px;
+  color: @pill_fg;
+}
+#network.disconnected { color: @warn; }
+
+/* ===== Workspace circles: smaller numbers, perfectly round ===== */
+#workspaces button {
+  font-size: 10px;
+  min-width: 16px;
+  min-height: 16px;
+  padding: 0;
+  margin: 2px 3px;
+  border-radius: 100px;
+}
+#workspaces button.active {
+  border-radius: 100px;
+}
+
+/* ===== Workspace: ring on active only, no fill ===== */
+#workspaces button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: @pill_fg;
+}
+#workspaces button:hover {
+  background: transparent;
+  box-shadow: none;
+}
+#workspaces button.active {
+  border: 1px solid @pill_fg;
+  background: transparent;
+  color: @pill_fg;
+}

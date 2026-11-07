@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+
+BASE="$HOME/Pictures/Wallpapers"
+LAST="$HOME/.cache/last-wallpaper"
+STATE_DIR="$HOME/.cache/wallpaper-shuffle"
+APPLY="$HOME/.local/bin/apply-wallpaper"
+
+notify() {
+    hyprctl notify -1 4000 "rgb(ff9900)" "$1" >/dev/null 2>&1
+}
+
+mkdir -p "$STATE_DIR" || {
+    notify "Cannot create shuffle history"
+    exit 1
+}
+
+# Prevent simultaneous random selections.
+exec 9>"$STATE_DIR/random.lock"
+flock 9
+
+current=$(cat "$LAST" 2>/dev/null)
+
+if [ -z "$current" ] || [ ! -f "$current" ]; then
+    notify "Cannot identify current wallpaper theme"
+    exit 1
+fi
+
+dir=$(dirname "$current")
+
+case "$dir" in
+    "$BASE"/*) ;;
+    *)
+        notify "Current wallpaper theme not found"
+        exit 1
+        ;;
+esac
+
+theme=$(basename "$dir")
+BAG="$STATE_DIR/$theme.remaining"
+
+mapfile -d '' -t wallpapers < <(
+    find "$dir" -maxdepth 1 -type f \
+        \( -iname '*.jpg' -o -iname '*.jpeg' \
+        -o -iname '*.png' -o -iname '*.webp' \) \
+        -print0 | sort -z
+)
+
+if [ ${#wallpapers[@]} -lt 2 ]; then
+    notify "Not enough wallpapers in this theme"
+    exit 1
+fi
+
+# Load unused wallpapers, ignoring deleted files
+# and the wallpaper currently on screen.
+remaining=()
+
+if [ -f "$BAG" ]; then
+    while IFS= read -r candidate; do
+        [ -f "$candidate" ] || continue
+        [ "$candidate" = "$current" ] && continue
+
+        case "$candidate" in
+            "$dir"/*) remaining+=("$candidate") ;;
+        esac
+    done < "$BAG"
+fi
+
+# Refill and shuffle only after the previous cycle is exhausted.
+if [ ${#remaining[@]} -eq 0 ]; then
+
+    for wallpaper in "${wallpapers[@]}"; do
+        [ "$wallpaper" = "$current" ] && continue
+        remaining+=("$wallpaper")
+    done
+
+    mapfile -t remaining < <(
+        printf '%s\n' "${remaining[@]}" | shuf
+    )
+
+    echo "Starting a new shuffle cycle for $theme"
+fi
+
+# Select the next wallpaper in the shuffled bag.
+selected="${remaining[0]}"
+remaining=("${remaining[@]:1}")
+
+echo "Selected: $(basename "$selected")"
+echo "Remaining after selection: ${#remaining[@]}"
+
+# Apply it using your existing animation and colour system.
+"$APPLY" "$selected" 9>&-
+result=$?
+
+# Save progress only if the wallpaper was actually applied.
+new_current=$(cat "$LAST" 2>/dev/null)
+
+if [ "$new_current" = "$selected" ]; then
+    TEMP_BAG="$BAG.tmp.$$"
+
+    if printf '%s\n' "${remaining[@]}" > "$TEMP_BAG" &&
+       mv -f "$TEMP_BAG" "$BAG"; then
+        echo "Shuffle progress saved."
+    else
+        rm -f "$TEMP_BAG"
+        notify "Could not save shuffle history"
+    fi
+fi
+
+exit "$result"

@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# Bluetooth menu: lists devices in wofi and controls them with bluetoothctl.
+
+# ----- Menu size (same idea as the Wi-Fi menu) -----
+WIDTH=320
+ROW=36
+PAD=60
+MAXROWS=8
+SCALE=70
+STYLE="${XDG_RUNTIME_DIR:-/tmp}/bluetooth-menu.css"
+cat "$HOME/.config/wofi/style.css" "$HOME/.config/wofi/bluetooth-extra.css" > "$STYLE" 2>/dev/null
+
+menu() {   # usage: menu <number of rows> <extra wofi options>
+  local rows=$1; shift
+  local h=$(( (PAD + ROW * rows) * SCALE / 100 ))
+  [ "$h" -lt 90 ] && h=90
+  wofi --dmenu --style "$STYLE" --width "$WIDTH" --height "$h" "$@"
+}
+
+err() { notify-send -u critical "Bluetooth" "$1"; }
+
+# Is there a Bluetooth adapter, and is it on?
+info=$(bluetoothctl show 2>&1)
+if ! grep -q "Powered:" <<< "$info"; then
+  err "No Bluetooth adapter found. Is the bluetooth service running?"
+  exit 1
+fi
+
+if ! grep -q "Powered: yes" <<< "$info"; then
+  pick=$(printf '%s\n' "Turn Bluetooth on" | menu 1 --prompt "Bluetooth is off") || exit 0
+  if [ "$pick" = "Turn Bluetooth on" ]; then
+    rfkill unblock bluetooth 2>/dev/null
+    bluetoothctl power on >/dev/null 2>&1 || err "Could not turn Bluetooth on"
+  fi
+  exit 0
+fi
+
+# Collect devices: connected first, then paired, then new ones
+connected=$(bluetoothctl devices Connected 2>/dev/null | awk '{print $2}')
+paired=$(bluetoothctl devices Paired 2>/dev/null | awk '{print $2}')
+all=$(bluetoothctl devices 2>/dev/null)
+
+declare -a labels macs states
+
+build() {   # $1 = which kind to add: connected, paired or new
+  local mac name st mark
+  while read -r _ mac name; do
+    [ -z "$mac" ] && continue
+    [ -z "$name" ] && continue
+    # skip unnamed gadgets that only show an address
+    [[ "$name" =~ ^([0-9A-Fa-f]{2}-){5}[0-9A-Fa-f]{2}$ ]] && continue
+    if   grep -qx "$mac" <<< "$connected"; then st=connected
+    elif grep -qx "$mac" <<< "$paired";    then st=paired
+    else st=new; fi
+    [ "$st" = "$1" ] || continue
+    case "$st" in connected) mark="✓" ;; paired) mark=" " ;; new) mark="+" ;; esac
+    labels+=("$mark $name"); macs+=("$mac"); states+=("$st")
+  done <<< "$all"
+}
+build connected; build paired; build new
+
+rows=$(( ${#labels[@]} + 3 ))
+[ "$rows" -gt "$MAXROWS" ] && rows=$MAXROWS
+
+choice=$(printf '%s\n' "${labels[@]}" "Scan for new devices" "Turn Bluetooth off" "Open full Bluetooth manager" \
+         | sed '/^$/d' | menu "$rows" --prompt "Bluetooth") || exit 0
+[ -z "$choice" ] && exit 0
+
+case "$choice" in
+  "Turn Bluetooth off")
+    bluetoothctl power off >/dev/null 2>&1
+    exit 0 ;;
+  "Open full Bluetooth manager")
+    setsid blueman-manager >/dev/null 2>&1 &
+    exit 0 ;;
+  "Scan for new devices")
+    notify-send -t 4000 "Bluetooth" "Scanning for 10 seconds..."
+    bluetoothctl --timeout 10 scan on >/dev/null 2>&1
+    exec "$0" ;;
+esac
+
+# Work out which device was picked
+idx=-1
+for i in "${!labels[@]}"; do
+  if [ "${labels[$i]}" = "$choice" ]; then idx=$i; break; fi
+done
+[ "$idx" -ge 0 ] || exit 0
+mac="${macs[$idx]}"; state="${states[$idx]}"; name="${choice:2}"
+
+connect() {
+  timeout 20 bluetoothctl connect "$mac" 2>&1 | grep -q "Connection successful" \
+    || err "Could not connect to $name. Is it switched on and nearby?"
+}
+forget() { bluetoothctl remove "$mac" >/dev/null 2>&1 || err "Could not forget $name"; }
+
+case "$state" in
+  connected)
+    act=$(printf '%s\n' "Disconnect" "Forget this device" | menu 2 --prompt "$name") || exit 0
+    case "$act" in
+      "Disconnect")         bluetoothctl disconnect "$mac" >/dev/null 2>&1 || err "Could not disconnect $name" ;;
+      "Forget this device") forget ;;
+    esac ;;
+  paired)
+    act=$(printf '%s\n' "Connect" "Forget this device" | menu 2 --prompt "$name") || exit 0
+    case "$act" in
+      "Connect")            connect ;;
+      "Forget this device") forget ;;
+    esac ;;
+  new)
+    notify-send -t 3000 "Bluetooth" "Pairing with $name..."
+    out=$(timeout 40 bluetoothctl pair "$mac" 2>&1)
+    if grep -q "Pairing successful" <<< "$out"; then
+      bluetoothctl trust "$mac" >/dev/null 2>&1
+      connect
+    else
+      bluetoothctl remove "$mac" >/dev/null 2>&1
+      err "Pairing with $name failed. If it needs a code, use the full manager."
+    fi ;;
+esac

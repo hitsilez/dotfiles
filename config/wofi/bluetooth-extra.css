@@ -1,0 +1,7 @@
+/* Extra rules for the Bluetooth menu only. They are added after the main style. */
+#input {
+  margin: 4px 6px;
+  padding: 2px 8px;
+  min-height: 0;
+  font-size: 12px;
+}

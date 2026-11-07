@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+BASE="$HOME/Pictures/Wallpapers"
+
+notify() {
+    hyprctl notify -1 4000 "rgb(ff9900)" "$1" >/dev/null 2>&1
+}
+
+last=$(cat "$HOME/.cache/last-wallpaper" 2>/dev/null)
+
+if [ ! -f "$last" ]; then
+    exec "$HOME/.local/bin/theme"
+fi
+
+dir=$(dirname "$last")
+
+case "$dir" in
+    "$BASE"/*) ;;
+    *) exec "$HOME/.local/bin/theme" ;;
+esac
+
+name=$(basename "$dir")
+
+mapfile -t imgs < <(
+    find "$dir" -maxdepth 1 -type f \
+    \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) |
+    sort
+)
+
+if [ ${#imgs[@]} -eq 0 ]; then
+    notify "No wallpapers in $dir"
+    exit 1
+fi
+
+pick=$(
+    {
+        printf 'text:Random\n'
+
+        for f in "${imgs[@]}"; do
+            printf 'img:%s:text:%s\n' "$f" "$(basename "$f")"
+        done
+
+    } | wofi --dmenu \
+        --allow-images \
+        --parse-search \
+        --define image_size=48 \
+        --define dmenu-parse_action=true \
+        --cache-file /dev/null \
+        --prompt "$name wallpaper"
+) || exit 0
+
+[ -z "$pick" ] && exit 0
+
+if [ "$pick" = "Random" ]; then
+    img=$(printf '%s\n' "${imgs[@]}" | shuf -n 1)
+else
+    img="$dir/$pick"
+fi
+
+exec "$HOME/.local/bin/apply-wallpaper" "$img"

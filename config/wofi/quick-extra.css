@@ -1,0 +1,32 @@
+/* Tile look for the quick-settings menu only. Added after the main style. */
+window {
+  border-radius: 26px;
+}
+#outer-box {
+  padding: 14px;
+  background-color: transparent;
+}
+#scroll {
+  margin: 0;
+}
+#inner-box {
+  background-color: transparent;
+}
+#entry {
+  margin: 5px;
+  padding: 14px 10px;
+  min-height: 36px;
+  border-radius: 18px;
+  background-color: alpha(@pill_bg, 0.55);
+}
+#entry:selected, #entry:hover {
+  background-color: @pill_bg;
+}
+#text {
+  margin-left: 8px;
+  font-size: 15px;
+  color: @pill_fg;
+}
+#entry:selected #text {
+  color: @pill_fg;
+}

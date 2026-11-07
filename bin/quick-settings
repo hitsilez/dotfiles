@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# Quick settings (tile style): Wi-Fi, Bluetooth, volume, brightness, lock, power.
+
+export LC_ALL=C.UTF-8
+
+# ----- Menu size -----
+WIDTH=380
+ROW_H=78       # height of one row of tiles
+EXTRA_H=40     # space around the tiles
+BIN="$HOME/.local/bin"
+STYLE="${XDG_RUNTIME_DIR:-/tmp}/quick-settings.css"
+cat "$HOME/.config/waybar/colors.css" "$HOME/.config/wofi/style.css" "$HOME/.config/wofi/quick-extra.css" > "$STYLE" 2>/dev/null
+
+# Use the tile options only if this version of wofi knows them
+EXTRA_OPTS=""
+wofi --help 2>&1 | grep -q -e '--columns'     && EXTRA_OPTS="$EXTRA_OPTS --columns 2"
+wofi --help 2>&1 | grep -q -e '--hide-search' && EXTRA_OPTS="$EXTRA_OPTS --hide-search"
+
+tiles() {   # usage: tiles <number of rows of tiles>
+  local rows=$1
+  wofi --dmenu --style "$STYLE" --width "$WIDTH" --height $(( ROW_H * rows + EXTRA_H )) $EXTRA_OPTS
+}
+
+# ----- Icons (Material Design icons from your Nerd Font) -----
+ic() { printf "$(printf '\\U%08x' "$1")"; }
+ICON_WIFI=$(ic 0xf05a9);  ICON_WIFI_OFF=$(ic 0xf05aa)
+ICON_BT=$(ic 0xf00af);    ICON_BT_OFF=$(ic 0xf00b2);  ICON_BT_CONN=$(ic 0xf00b1)
+ICON_VOL=$(ic 0xf057e);   ICON_MUTE=$(ic 0xf0581)
+ICON_BRIGHT=$(ic 0xf00df); ICON_LOCK=$(ic 0xf033e);   ICON_POWER=$(ic 0xf0425)
+
+trunc() { local s=$1 n=${2:-14}; if [ "${#s}" -gt "$n" ]; then s="${s:0:n-1}…"; fi; printf '%s' "$s"; }
+
+# ----- What each tile shows -----
+wifi_label() {
+  if [ "$(nmcli radio wifi 2>/dev/null)" != "enabled" ]; then echo "$ICON_WIFI_OFF  Off"; return; fi
+  local ssid
+  ssid=$(nmcli -t -e no -f ACTIVE,SSID device wifi 2>/dev/null | awk -F: '$1=="yes"{print substr($0,5); exit}')
+  if [ -n "$ssid" ]; then echo "$ICON_WIFI  $(trunc "$ssid")"; else echo "$ICON_WIFI_OFF  Not connected"; fi
+}
+
+bt_label() {
+  local info dev
+  info=$(bluetoothctl show 2>/dev/null)
+  if ! grep -q "Powered:" <<< "$info"; then echo "$ICON_BT_OFF  None"; return; fi
+  if ! grep -q "Powered: yes" <<< "$info"; then echo "$ICON_BT_OFF  Off"; return; fi
+  dev=$(bluetoothctl devices Connected 2>/dev/null | head -1 | cut -d' ' -f3-)
+  if [ -n "$dev" ]; then echo "$ICON_BT_CONN  $(trunc "$dev")"; else echo "$ICON_BT  On"; fi
+}
+
+vol_label() {
+  local out
+  out=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null) || { echo "$ICON_VOL  n/a"; return; }
+  if grep -q MUTED <<< "$out"; then echo "$ICON_MUTE  Muted"
+  else echo "$ICON_VOL  $(awk '{printf "%d%%", $2*100}' <<< "$out")"; fi
+}
+
+bright_label() {
+  local cur max
+  cur=$(brightnessctl get 2>/dev/null); max=$(brightnessctl max 2>/dev/null)
+  if [ -n "$cur" ] && [ -n "$max" ]; then echo "$ICON_BRIGHT  $(( cur * 100 / max ))%"
+  else echo "$ICON_BRIGHT  n/a"; fi
+}
+
+# ----- Volume and brightness choices -----
+sub_volume() {
+  local act
+  act=$(printf '%s\n' "$ICON_MUTE  Mute" "$ICON_VOL  100%" "$ICON_VOL  75%" "$ICON_VOL  50%" "$ICON_VOL  25%" "$ICON_VOL  10%" | tiles 3) || return
+  case "$act" in
+    *Mute*) wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
+    *%)     p=${act##* }; wpctl set-mute @DEFAULT_AUDIO_SINK@ 0
+            wpctl set-volume @DEFAULT_AUDIO_SINK@ "$(awk -v p="${p%\%}" 'BEGIN{printf "%.2f", p/100}')" ;;
+  esac
+  [ -x "$BIN/osd" ] && "$BIN/osd" volume show
+}
+
+sub_brightness() {
+  local act p
+  act=$(printf '%s\n' "$ICON_BRIGHT  100%" "$ICON_BRIGHT  75%" "$ICON_BRIGHT  50%" "$ICON_BRIGHT  25%" "$ICON_BRIGHT  10%" | tiles 3) || return
+  p=${act##* }
+  brightnessctl set "$p" >/dev/null 2>&1
+  [ -x "$BIN/osd" ] && "$BIN/osd" brightness show
+}
+
+# ----- Main menu -----
+labels=( "$(wifi_label)" "$(bt_label)" "$(vol_label)" "$(bright_label)" "$ICON_LOCK  Lock" "$ICON_POWER  Power" )
+choice=$(printf '%s\n' "${labels[@]}" | tiles 3) || exit 0
+[ -z "$choice" ] && exit 0
+
+idx=-1
+for i in "${!labels[@]}"; do
+  if [ "${labels[$i]}" = "$choice" ]; then idx=$i; break; fi
+done
+
+case "$idx" in
+  0) exec "$BIN/wifi-menu" ;;
+  1) exec "$BIN/bluetooth-menu" ;;
+  2) sub_volume ;;
+  3) sub_brightness ;;
+  4) exec "$BIN/lock-screen" ;;
+  5) exec "$BIN/power-menu" ;;
+esac

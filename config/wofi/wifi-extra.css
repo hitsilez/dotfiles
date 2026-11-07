@@ -1,0 +1,7 @@
+/* Extra rules for the Wi-Fi menu only. They are added after the main style, so they win. */
+#input {
+  margin: 4px 6px;
+  padding: 2px 8px;
+  min-height: 0;
+  font-size: 12px;
+}

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+BASE="$HOME/Pictures/Wallpapers"
+notify() { hyprctl notify -1 4000 "rgb(ff9900)" "$1" >/dev/null 2>&1; }
+
+choice=$(printf '%s\n' "Christianity" "Sci-Fi" "Apocalypse" "Anime" | wofi --dmenu --prompt "Theme") || exit 0
+[ -z "$choice" ] && exit 0
+dir=$(echo "$choice" | tr 'A-Z' 'a-z' | tr -d '-')
+
+mapfile -t imgs < <(find "$BASE/$dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | sort)
+if [ ${#imgs[@]} -eq 0 ]; then
+  notify "No wallpapers in $BASE/$dir yet"
+  exit 1
+fi
+
+pick=$( { echo "Random"; for f in "${imgs[@]}"; do basename "$f"; done; } | wofi --dmenu --prompt "$choice wallpaper") || exit 0
+[ -z "$pick" ] && exit 0
+
+if [ "$pick" = "Random" ]; then
+  img=$(printf '%s\n' "${imgs[@]}" | shuf -n 1)
+else
+  img="$BASE/$dir/$pick"
+fi
+exec "$HOME/.local/bin/apply-wallpaper" "$img"

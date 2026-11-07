@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+
+notify() {
+    hyprctl notify -1 4000 "rgb(ff9900)" "$1" >/dev/null 2>&1
+}
+
+if [ "$1" = "--restore" ]; then
+    img=$(cat "$HOME/.cache/last-wallpaper" 2>/dev/null)
+    restore=1
+else
+    img="$1"
+fi
+
+if [ -z "$img" ] || [ ! -f "$img" ]; then
+    notify "Wallpaper file not found"
+    exit 1
+fi
+
+# Keep the SDDM login background synchronized.
+sync_sddm_background() {
+    local destination="/var/lib/sddm-wallpaper-sync/current.jpg"
+    local temporary="${destination}.tmp.$$"
+
+    if cp -- "$img" "$temporary" &&
+       chmod 644 "$temporary" &&
+       mv -f -- "$temporary" "$destination"; then
+        return 0
+    fi
+
+    rm -f "$temporary"
+    return 1
+}
+
+# Start Awww if needed.
+if ! awww query >/dev/null 2>&1; then
+    awww-daemon >> "$HOME/.cache/awww-daemon.log" 2>&1 &
+fi
+
+READY=0
+for attempt in $(seq 1 30); do
+    if awww query >/dev/null 2>&1; then
+        READY=1
+        break
+    fi
+    sleep 0.2
+done
+
+if [ "$READY" -ne 1 ]; then
+    notify "Awww failed to start"
+    exit 1
+fi
+
+# Restore wallpaper instantly at login.
+if [ -n "$restore" ]; then
+    if ! awww img --resize crop --transition-type none "$img" \
+        >> "$HOME/.cache/awww.log" 2>&1; then
+        notify "Wallpaper restoration failed"
+        exit 1
+    fi
+
+    if ! sync_sddm_background; then
+        notify "SDDM background sync failed"
+    fi
+
+    exit 0
+fi
+
+# Apply wallpaper with your top-left circular animation.
+if ! awww img \
+    --resize crop \
+    --transition-type grow \
+    --transition-pos top-left \
+    --transition-duration 1.2 \
+    --transition-fps 30 \
+    "$img" >> "$HOME/.cache/awww.log" 2>&1; then
+
+    notify "Wallpaper animation failed"
+    exit 1
+fi
+
+# Remember wallpaper.
+echo "$img" > "$HOME/.cache/last-wallpaper"
+
+# Update SDDM background.
+SDDM_SYNC_OK=1
+if ! sync_sddm_background; then
+    SDDM_SYNC_OK=0
+fi
+
+# Generate matching system colours.
+if ! matugen image "$img" -m dark --source-color-index 0 \
+    > "$HOME/.cache/matugen.log" 2>&1; then
+    notify "Recoloring failed - check matugen.log"
+    exit 1
+fi
+
+# Restart Waybar.
+hyprctl reload >/dev/null 2>&1 || true
+makoctl reload >/dev/null 2>&1 || true
+
+pkill -x waybar 2>/dev/null || true
+sleep 1
+waybar >> "$HOME/.cache/waybar.log" 2>&1 &
+
+if [ "$SDDM_SYNC_OK" -eq 1 ]; then
+    : # success is silent
+else
+    notify "Desktop updated, but SDDM wallpaper sync failed"
+fi

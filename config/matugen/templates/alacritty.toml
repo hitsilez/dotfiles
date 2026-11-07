@@ -1,0 +1,7 @@
+[colors.primary]
+background = "{{colors.background.default.hex}}"
+foreground = "{{colors.on_background.default.hex}}"
+
+[colors.cursor]
+text = "{{colors.background.default.hex}}"
+cursor = "{{colors.primary.default.hex}}"
