@@ -6,8 +6,7 @@ Matugen (wallpaper colors), Mako, my scripts, and the SDDM login theme.
 ## Restoring on a fresh Arch install
 1. Install the programs:
    sudo pacman -S --needed - < packages-official.txt
-   Then install what is in packages-extra-aur.txt (these came from outside the
-   official repos, for example awww) using an AUR helper.
+   (packages-extra-aur.txt is empty, so everything comes from the official repos.)
 2. Run ./restore.sh  (it keeps a copy of anything it replaces).
 3. Put wallpapers into ~/Pictures/Wallpapers/{christianity,scifi,apocalypse,anime}
    (wallpapers are not saved here).
