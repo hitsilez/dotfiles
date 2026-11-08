@@ -2,8 +2,8 @@
 
 font=JetBrainsMono Nerd Font 10
 
-background-color=#14140cE8
-text-color=#e6e3d5
+background-color=#0f1416E8
+text-color=#dee3e5
 
 width=360
 height=160
@@ -13,10 +13,10 @@ margin=8
 padding=14
 
 border-size=1
-border-color=#cccb76CC
+border-color=#84d2e6CC
 border-radius=18
 
-progress-color=over #cccb76
+progress-color=over #84d2e6
 
 icons=1
 max-icon-size=32

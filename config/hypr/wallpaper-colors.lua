@@ -1,4 +1,4 @@
 return {
-  active   = { "rgba(cccb76ee)", "rgba(a4d0bcee)" },
-  inactive = "rgba(48473aaa)",
+  active   = { "rgba(84d2e6ee)", "rgba(bec4ebee)" },
+  inactive = "rgba(3f484baa)",
 }

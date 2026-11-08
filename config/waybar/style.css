@@ -1,112 +1,182 @@
-@import "colors.css";
-/* ===== COLORS (the theme switcher will change these later) ===== */
-
+@import url('../../.cache/wal/colors-waybar.css');
 * {
-  font-family: "JetBrainsMono Nerd Font", monospace;
-  font-size: 12px;
-  border: none;
-  border-radius: 0;
-  min-height: 0;
+    font-size:15px;
+    font-family: "CodeNewRoman Nerd Font Propo";
 }
-
-window#waybar {
-  background: transparent;
+window#waybar{
+    all:unset;
 }
-
-.modules-left,
-.modules-center,
+.modules-left {
+    padding:7px;
+    margin:10 0 5 10;
+    border-radius:10px;
+    background: alpha(@background,.6);
+    box-shadow: 0px 0px 2px rgba(0, 0, 0, .6);
+}
+.modules-center {
+    padding:7px;
+    margin:10 0 5 0;
+    border-radius:10px;
+    background: alpha(@background,.6);
+    box-shadow: 0px 0px 2px rgba(0, 0, 0, .6);
+    min-width: 150.5px;
+}
 .modules-right {
-  background: @pill_bg;
-  color: @pill_fg;
-  border-radius: 12px;
-  padding: 0 5px;
+    padding:7px;
+    margin: 10 10 5 0;
+    border-radius:10px;
+    background: alpha(@background,.6);
+    box-shadow: 0px 0px 2px rgba(0, 0, 0, .6);
+}
+tooltip {
+    background:@background;
+    color: @color7;
+}
+#clock:hover, #custom-pacman:hover, #custom-notification:hover,#bluetooth:hover,#network:hover,#battery:hover, #cpu:hover,#memory:hover,#temperature:hover{
+    transition: all .3s ease;
+    color:@accent;
+}
+#custom-notification {
+    padding: 0px 5px;
+    transition: all .3s ease;
+    color:@color7;
+}
+#clock{
+    padding: 0px 5px;
+    color:@color7;
+    transition: all .3s ease;
+}
+#custom-pacman{
+    padding: 0px 5px;
+    transition: all .3s ease;
+    color:@color7;
+
 }
 
-#network, #clock, #cpu, #memory, #disk,
-#backlight, #pulseaudio, #battery {
-  padding: 0 5px;
-  color: @pill_fg;
+#workspaces {
+    padding: 0px 5px;
+    text-shadow:none;
 }
-
-#custom-logo {
-  padding: 0 6px;
-  font-size: 14px;
-  color: @pill_fg;
-}
-
 #workspaces button {
-  padding: 0 5px;
-  margin: 2px 2px;
-  border-radius: 8px;
-  background: transparent;
-  background-image: none;
-  box-shadow: none;
-  text-shadow: none;
-  color: @pill_fg;
-}
-
-#workspaces button.active {
-  background: @active_bg;
-}
-
-#battery.warning { color: @warn; }
-#battery.critical { color: @crit; }
-
-/* ===== Workspace numbers in circles ===== */
-#workspaces button {
-  min-width: 16px;
-  min-height: 16px;
-  padding: 0;
-  margin: 2px 3px;
-  border: 1px solid @pill_fg;
-  border-radius: 50%;
-  background: transparent;
-  color: @pill_fg;
-}
-
-#workspaces button.active {
-  background: @pill_fg;
-  color: @pill_bg;
-}
-
-/* ===== Wifi, bluetooth and the arrow ===== */
-#bluetooth, #custom-arrow {
-  padding: 0 5px;
-  color: @pill_fg;
-}
-#network.disconnected { color: @warn; }
-
-/* ===== Workspace circles: smaller numbers, perfectly round ===== */
-#workspaces button {
-  font-size: 10px;
-  min-width: 16px;
-  min-height: 16px;
-  padding: 0;
-  margin: 2px 3px;
-  border-radius: 100px;
-}
-#workspaces button.active {
-  border-radius: 100px;
-}
-
-/* ===== Workspace: ring on active only, no fill ===== */
-#workspaces button {
-  border: 1px solid transparent;
-  background: transparent;
-  color: @pill_fg;
+    all:unset;
+    margin: 0px 3px;    
+    padding: 0px 2px;
+    color:rgba(0,0,0,0);
+    text-shadow:none;
+    background: @color2;
+    border-radius: 50%;
+    transition: all .3s;
+    min-width: 15px;
 }
 #workspaces button:hover {
-  background: transparent;
-  box-shadow: none;
+    color:rgba(0,0,0,0);
+    border: none;
+    background: @color1;
 }
 #workspaces button.active {
-  border: 1px solid @pill_fg;
-  background: transparent;
-  color: @pill_fg;
+    border: none;
+    padding: 0px 2px;
+    border-radius:10px;
+    background: @color1;
+    min-width: 30px;
+}
+#workspaces button.active:hover{
+    background: @color2;
+}
+#workspaces button.empty {
+    color: transparent;
+    border: none;
+    background: alpha(@background,.5) ;
+
+}
+#workspaces button.empty:hover {
+    color: rgba(0,0,0,0);
+    border: none;
+    text-shadow: 0px 0px 1.5px rgba(0, 0, 0, .5);
+}
+#workspaces button.empty.active {
+    color: rgba(0,0,0,0);
+    border: none;
+    text-shadow: none;
+    background: @color1;
+}
+#workspaces button.empty.active:hover{
+    background: @color2;
+}
+#bluetooth{
+    padding: 0px 5px;
+    transition: all .3s ease;
+    color:@color7;
+
+}
+#network{
+    padding: 0px 5px;
+    transition: all .3s ease;
+    color:@color7;
+
+}
+#battery{
+    padding: 0px 5px;
+    transition: all .3s ease;
+    color:@color7;
+
+
+}
+#battery.charging {
+    color: #26A65B;
 }
 
-/* ===== Power button ===== */
-#custom-power {
-  padding: 0 8px;
-  color: @pill_fg;
+#battery.warning:not(.charging) {
+    color: #ffbe61;
+}
+
+#battery.critical:not(.charging) {
+    color: #f53c3c;
+    animation-name: blink;
+    animation-duration: 0.5s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+#group-expand{
+    padding: 0px 5px;
+    transition: all .3s ease; 
+}
+#custom-expand{
+    padding: 0px 5px;
+    color:alpha(@foreground,.2);
+    text-shadow: 0px 0px 2px rgba(0, 0, 0, .7);
+    transition: all .3s ease; 
+}
+#custom-expand:hover{
+    color:rgba(255,255,255,.2);
+    text-shadow: 0px 0px 2px rgba(255, 255, 255, .5);
+}
+#custom-colorpicker{
+    padding: 0px 5px;
+}
+#cpu,#memory,#temperature{
+    padding: 0px 5px;
+    transition: all .3s ease; 
+    color:@color7;
+
+}
+#custom-endpoint{
+    color:transparent;
+    text-shadow: 0px 0px 1.5px rgba(0, 0, 0, 1);
+
+}
+#tray{
+    padding: 0px 5px;
+    transition: all .3s ease; 
+
+}
+#tray menu * {
+    padding: 0px 5px;
+    transition: all .3s ease; 
+}
+
+#tray menu separator {
+    padding: 0px 5px;
+    transition: all .3s ease; 
 }

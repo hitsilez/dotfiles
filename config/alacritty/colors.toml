@@ -1,7 +1,7 @@
 [colors.primary]
-background = "#14140c"
-foreground = "#e6e3d5"
+background = "#0f1416"
+foreground = "#dee3e5"
 
 [colors.cursor]
-text = "#14140c"
-cursor = "#cccb76"
+text = "#0f1416"
+cursor = "#84d2e6"
