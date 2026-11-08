@@ -9,8 +9,13 @@
 
   "modules-left": ["custom/logo", "hyprland/workspaces"],
   "modules-center": ["clock"],
-  "modules-right": ["group/stats", "network", "bluetooth", "backlight", "pulseaudio", "battery"],
+  "modules-right": ["group/stats", "network", "bluetooth", "backlight", "pulseaudio", "battery", "custom/power"],
 
+  "custom/power": {
+    "format": "\uf011",
+    "tooltip": false,
+    "on-click": "$HOME/.local/bin/power-menu"
+  },
   "custom/logo": {
     "format": "\uf303",
     "tooltip": false,

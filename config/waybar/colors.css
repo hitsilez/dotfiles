@@ -1,5 +1,5 @@
-@define-color pill_bg #004b70;
-@define-color pill_fg #cae6ff;
-@define-color active_bg #004b70;
-@define-color warn #d0c0e8;
+@define-color pill_bg #713342;
+@define-color pill_fg #ffd9df;
+@define-color active_bg #713342;
+@define-color warn #ecbe91;
 @define-color crit #ffb4ab;

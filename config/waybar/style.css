@@ -104,3 +104,9 @@ window#waybar {
   background: transparent;
   color: @pill_fg;
 }
+
+/* ===== Power button ===== */
+#custom-power {
+  padding: 0 8px;
+  color: @pill_fg;
+}
