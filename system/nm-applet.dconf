@@ -1,0 +1,6 @@
+[/]
+disable-connected-notifications=true
+
+[eap/5d00c1cd-6fb7-4511-8aae-2a4dc6f95265]
+ignore-ca-cert=false
+ignore-phase2-ca-cert=false
