@@ -17,6 +17,7 @@ for name in hypr waybar wofi alacritty matugen mako; do
   copy_dir "$HOME/.config/$name" "$DEST/config/$name"
 done
 copy_dir "$HOME/.local/bin" "$DEST/bin"
+rm -f "$DEST/bin/moviebox-tui"
 
 pacman -Qqen > "$DEST/packages-official.txt"
 pacman -Qqem > "$DEST/packages-extra-aur.txt"
