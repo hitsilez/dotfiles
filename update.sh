@@ -45,6 +45,12 @@ dconf dump /org/gnome/nm-applet/ > "$DEST/system/nm-applet.dconf" 2>/dev/null
 [ -f /etc/systemd/zram-generator.conf ] && cp /etc/systemd/zram-generator.conf "$DEST/system/"
 [ -d /etc/sddm.conf.d ] && cp -r /etc/sddm.conf.d "$DEST/system/"
 [ -f /etc/sddm.conf ] && cp /etc/sddm.conf "$DEST/system/"
+[ -f "$HOME/.cache/last-wallpaper" ] && cp "$HOME/.cache/last-wallpaper" "$DEST/system/last-wallpaper"
+if [ -d /usr/share/sddm/themes/midnight-glass ]; then
+  mkdir -p "$DEST/system/sddm-themes"
+  cp -r /usr/share/sddm/themes/midnight-glass "$DEST/system/sddm-themes/"
+  rm -f "$DEST"/system/sddm-themes/midnight-glass/*.backup*
+fi
 
 cd "$DEST" || exit 1
 git add -A

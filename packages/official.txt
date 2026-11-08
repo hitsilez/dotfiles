@@ -12,6 +12,7 @@ dolphin
 dunst
 elisa
 git
+github-cli
 grim
 gst-plugin-pipewire
 gvfs

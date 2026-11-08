@@ -43,6 +43,18 @@ echo ">> System files"
 [ -f "$DOT/system/zram-generator.conf" ] && sudo cp "$DOT/system/zram-generator.conf" /etc/systemd/
 [ -d "$DOT/system/sddm.conf.d" ] && sudo cp -r "$DOT/system/sddm.conf.d" /etc/
 [ -f "$DOT/system/sddm.conf" ] && sudo cp "$DOT/system/sddm.conf" /etc/
+if [ -f "$DOT/system/last-wallpaper" ]; then
+  mkdir -p ~/.cache
+  sed "s|/home/tsilez|$HOME|g" "$DOT/system/last-wallpaper" > ~/.cache/last-wallpaper
+fi
+[ -d "$DOT/system/sddm-themes" ] && sudo cp -a "$DOT/system/sddm-themes/." /usr/share/sddm/themes/
+sudo mkdir -p /var/lib/sddm-wallpaper-sync
+if [ ! -e /var/lib/sddm-wallpaper-sync/current.jpg ]; then
+  first=$(find ~/Pictures/Wallpapers -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) 2>/dev/null | head -1)
+  [ -n "$first" ] && sudo cp "$first" /var/lib/sddm-wallpaper-sync/current.jpg
+fi
+sudo chown -R "$USER":"$USER" /var/lib/sddm-wallpaper-sync
+sudo chmod -R a+rX /var/lib/sddm-wallpaper-sync
 [ -f "$DOT/system/nm-applet.dconf" ] && { dconf load /org/gnome/nm-applet/ < "$DOT/system/nm-applet.dconf" || echo "(dconf will need loading after first login)"; }
 
 echo ">> Enabling services"
