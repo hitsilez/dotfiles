@@ -100,7 +100,7 @@ makoctl reload >/dev/null 2>&1 || true
 
 pkill -x waybar 2>/dev/null || true
 sleep 1
-waybar >> "$HOME/.cache/waybar.log" 2>&1 &
+waybar > "$HOME/.cache/waybar.log" 2>&1 &
 
 if [ "$SDDM_SYNC_OK" -eq 1 ]; then
     : # success is silent
