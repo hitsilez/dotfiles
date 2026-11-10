@@ -27,12 +27,12 @@ fi
 
 echo ">> Copying configs"
 mkdir -p ~/.config ~/.local/bin
-cp -a "$DOT/config/." ~/.config/
-cp -a "$DOT/bin/." ~/.local/bin/
-cp -a "$DOT/home/." ~/
+cp -a --remove-destination "$DOT/config/." ~/.config/
+cp -a --remove-destination "$DOT/bin/." ~/.local/bin/
+cp -a --remove-destination "$DOT/home/." ~/
 if [ -d "$DOT/wallpapers" ]; then
   mkdir -p ~/Pictures/Wallpapers
-  cp -a "$DOT/wallpapers/." ~/Pictures/Wallpapers/
+  cp -a --remove-destination "$DOT/wallpapers/." ~/Pictures/Wallpapers/
 fi
 
 if [ "$HOME" != "/home/tsilez" ]; then

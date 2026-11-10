@@ -103,7 +103,6 @@ pulsemixer
 python-pillow
 qt5-wayland
 qt6-wayland
-quickshell
 reflector
 rofi
 rsync

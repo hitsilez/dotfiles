@@ -3,7 +3,6 @@ bibata-cursor-theme-bin
 gnome-network-displays
 hyprdvd
 hyprmon
-libastal-gjs-git
 libastal-mpris-git
 libastal-notifd-git
 libastal-wireplumber-git
@@ -13,6 +12,5 @@ pamtester
 pyprland
 python-pywal16
 python-pywalfox
-qogir-icon-theme
 yay
 yay-debug
